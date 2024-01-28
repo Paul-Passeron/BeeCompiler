@@ -1,0 +1,33 @@
+#ifndef STACK_H
+#define STACK_H
+
+typedef struct
+{
+    int address;
+    char *identifier;
+    int n_bytes;
+    int scope_index;
+
+} scope_elem_t;
+
+typedef scope_elem_t stack_val_t;
+
+typedef struct
+{
+    stack_val_t *data;
+    int length;
+    int capacity;
+} stack_t;
+
+void stack_create(stack_t *s);
+void stack_free(stack_t *s);
+
+int stack_empty(stack_t s);
+
+void stack_push(stack_t *s, stack_val_t v);
+stack_val_t stack_pop(stack_t *s);
+stack_val_t stack_peek(stack_t *s);
+
+scope_elem_t get_scope_elem(char *identifier, stack_t s, int *found);
+
+#endif // STACK_H
