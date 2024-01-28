@@ -2,6 +2,7 @@
 #include "stack.h"
 #include "lexer.h"
 #include <stdlib.h>
+#include "common.h"
 
 void usage(char *name)
 {

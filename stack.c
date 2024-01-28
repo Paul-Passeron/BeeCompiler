@@ -18,7 +18,7 @@ void stack_create(stack_t *s)
 
 void stack_free(stack_t *s)
 {
-    free(s->data);
+    FREE(s->data);
     s->capacity = 0;
     s->length = 0;
 }

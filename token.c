@@ -16,7 +16,7 @@ void token_array_create(token_array_t *s)
 }
 void token_array_free(token_array_t *s)
 {
-    free(s->data);
+    FREE(s->data);
     s->capacity = 0;
     s->length = 0;
 }

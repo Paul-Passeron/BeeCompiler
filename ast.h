@@ -2,6 +2,7 @@
 #define AST_H
 
 #include "token.h"
+#include "common.h"
 
 typedef struct node_t node_t;
 
@@ -19,6 +20,8 @@ struct node_t
         ast_identifier,
         ast_literal,
         ast_unary_op,
+        ast_statement,
+        ast_program,
     } tag;
     union
     {
@@ -60,6 +63,7 @@ struct node_t
         {
             token_t t;
             node_t **args;
+            int arity;
         } ast_function_call;
 
         struct ast_assignement
@@ -84,9 +88,38 @@ struct node_t
             node_t *operand;
         } ast_unary_op;
 
+        struct ast_statement
+        {
+            node_t *statement;
+        } ast_statement;
+
+        struct ast_program
+        {
+            node_t **program;
+            int length;
+        } ast_program;
+
     } data;
 };
 
 typedef node_t *ast_t;
+
+ast_t new_ast(node_t node);
+
+node_t empty_program();
+
+void free_ast(ast_t a);
+
+typedef struct
+{
+    ast_t *data;
+    int length;
+    int capacity;
+} ast_stack_t;
+
+void ast_stack_create(ast_stack_t *s);
+void ast_stack_free(ast_stack_t *s);
+void ast_stack_push(ast_stack_t *s, ast_t a);
+ast_t ast_stack_pop(ast_stack_t *s);
 
 #endif // AST_H

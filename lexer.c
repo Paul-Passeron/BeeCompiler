@@ -104,11 +104,12 @@ void lexer_create(lexer_t *l, char *filename)
 
 void lexer_free(lexer_t *l)
 {
-    for (int i = 0; i < l->tokens.length; i++)
-        free(l->tokens.data[i].lexeme);
+    // No need to free tokens lexemes as they are used in the parser
+    /*for (int i = 0; i < l->tokens.length; i++)
+        free(l->tokens.data[i].lexeme);*/
     token_array_free(&(l->tokens));
-    free(l->start);
-    free(l->filename);
+    FREE(l->start);
+    FREE(l->filename);
 }
 
 int get_end_of_splitter(char *s)

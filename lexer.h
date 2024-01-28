@@ -4,6 +4,7 @@
 char *read_entire_file(char *filename);
 
 #include "token.h"
+#include "common.h"
 
 typedef enum
 {
@@ -32,6 +33,8 @@ typedef struct
 } lexer_t;
 
 void lexer_create(lexer_t *l, char *filename);
+
+// Should be called after the parser is done, otherwise some tokens lexemes might be freed
 void lexer_free(lexer_t *l);
 
 void step_lexer(lexer_t *l);
