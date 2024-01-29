@@ -17,6 +17,7 @@ typedef struct
 {
     int line;
     int col;
+    int abs_offset;
     char *lexeme;
     token_type_t type;
 } token_t;

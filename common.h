@@ -8,4 +8,7 @@
         (ptr) = NULL; \
     } while (0)
 
+int is_whitespace(char c);
+int is_splitter(char c);
+
 #endif // COMMON_H

@@ -5,20 +5,9 @@ char *read_entire_file(char *filename);
 
 #include "token.h"
 #include "common.h"
+#include "error.h"
 
-typedef enum
-{
-    SYNTAX_ERROR
-} flags_t;
-
-typedef enum
-{
-    UNEXP_DELIM,
-    UNCLOSED_STRLIT,
-    INVALID_STRLIT,
-    UNCLOSED_CHRLIT,
-    INVALID_CHRLIT
-} syntax_error_t;
+typedef err_type_t flag_t;
 
 typedef struct
 {

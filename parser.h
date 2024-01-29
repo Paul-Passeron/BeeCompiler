@@ -15,6 +15,8 @@ typedef struct
     ast_t ast;
     stack_t scope_variables;
     ast_stack_t scope;
+    char *filename;
+    char *text;
 } parser_t;
 
 void parser_create(parser_t *p, lexer_t l); // should copy tokens so it cannot be freed from lexer

@@ -93,10 +93,10 @@ void free_ast(ast_t a)
         free_ast(data.operand);
     }
     break;
-    case ast_statement:
+    case ast_expression:
     {
-        struct ast_statement data = a->data.ast_statement;
-        free_ast(data.statement);
+        struct ast_expression data = a->data.ast_expression;
+        free_ast(data.expression);
     }
     break;
     case ast_program:
@@ -159,5 +159,17 @@ ast_t ast_stack_pop(ast_stack_t *s)
         printf("Cannot pop empty ast stack\n");
         exit(2);
     }
-    return s->data[--s->length];
+    s->length -= 1;
+    return s->data[s->length];
+}
+
+ast_t ast_stack_peek(ast_stack_t *s)
+{
+
+    if (s->length == 0)
+    {
+        printf("Cannot peek empty ast stack\n");
+        exit(2);
+    }
+    return s->data[s->length - 1];
 }

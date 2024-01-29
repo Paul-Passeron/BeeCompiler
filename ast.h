@@ -20,7 +20,7 @@ struct node_t
         ast_identifier,
         ast_literal,
         ast_unary_op,
-        ast_statement,
+        ast_expression,
         ast_program,
         ast_return,
     } tag;
@@ -65,6 +65,7 @@ struct node_t
             token_t t;
             node_t **args;
             int arity;
+            int capacity;
         } ast_function_call;
 
         struct ast_assignement
@@ -89,15 +90,16 @@ struct node_t
             node_t *operand;
         } ast_unary_op;
 
-        struct ast_statement
+        struct ast_expression
         {
-            node_t *statement;
-        } ast_statement;
+            node_t *expression;
+        } ast_expression;
 
         struct ast_program
         {
             node_t **program;
             int length;
+            int capacity;
         } ast_program;
 
         struct ast_return
@@ -127,5 +129,6 @@ void ast_stack_create(ast_stack_t *s);
 void ast_stack_free(ast_stack_t *s);
 void ast_stack_push(ast_stack_t *s, ast_t a);
 ast_t ast_stack_pop(ast_stack_t *s);
+ast_t ast_stack_peek(ast_stack_t *s);
 
 #endif // AST_H

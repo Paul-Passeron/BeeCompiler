@@ -6,26 +6,6 @@
 
 extern int errno;
 
-int is_whitespace(char c)
-{
-    if (c == ' ' || c == '\n')
-        return 1;
-    return 0;
-}
-
-int is_splitter(char c)
-{
-    char splitters[] = " \n=+-*/;{}()<>\%|&,\"\'1234567890!";
-    int splitters_count = sizeof(splitters) - 1;
-
-    for (int i = 0; i < splitters_count; i++)
-    {
-        if (c == splitters[i])
-            return 1;
-    }
-    return 0;
-}
-
 char *read_entire_file(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -49,44 +29,6 @@ char *read_entire_file(char *filename)
     buffer[length] = 0;
     fclose(f);
     return buffer;
-}
-
-void print_error_preface(lexer_t l)
-{
-    printf("\033[1m%s:%d:%d:\033[0m ", l.filename, l.line, l.col);
-}
-
-void print_syntax_error(lexer_t l, syntax_error_t err)
-{
-    print_error_preface(l);
-    printf("\033[1m\033[31mSyntax Error:\033[00m\033[0m ");
-    switch (err)
-    {
-    case UNEXP_DELIM:
-    {
-        char c = *(l.remaining + 1);
-        if (c && is_splitter(c) && !is_whitespace(c))
-            printf("Unexpected delimeter '\033[1;33m%c%c\033[00m'.\n", *l.remaining, c);
-        else
-            printf("Unexpected delimeter '\033[1;33m%c\033[00m'.\n", *l.remaining);
-    }
-    break;
-    case UNCLOSED_STRLIT:
-        printf("Unclosed string literal: '\033[1;33m%.10s\033[00m...'\n", l.remaining);
-        break;
-    case INVALID_STRLIT:
-        printf("Invalid string literal: '\033[1;33m%.10s\033[00m...'\n", l.remaining);
-        break;
-    case UNCLOSED_CHRLIT:
-        printf("Unclosed char literal: '\033[1;33m%.10s\033[00m...'\n", l.remaining);
-        break;
-    case INVALID_CHRLIT:
-        printf("Invalid char literal: '\033[1;33m%.10s\033[00m...'\n", l.remaining);
-        break;
-    default:
-        break;
-    }
-    fflush(stdout);
 }
 
 void lexer_create(lexer_t *l, char *filename)
@@ -218,6 +160,18 @@ int is_char_litteral(char *s)
     return strcmp(s, "\\000") == 0;
 }
 
+error_reporter_t create_error_l(lexer_t l, err_type_t t, error_t error)
+{
+    error_reporter_t err;
+    err.col = l.col;
+    err.line = l.line;
+    err.abs_offset = l.remaining - l.start;
+    err.text = l.start;
+    err.filename = l.filename;
+    err.t = t;
+    err.error = error;
+    return err;
+}
 void step_lexer(lexer_t *l)
 {
 
@@ -263,7 +217,8 @@ void step_lexer(lexer_t *l)
             l->line = line;
             char *tmp3 = l->remaining;
             l->remaining = start;
-            print_syntax_error(*l, INVALID_STRLIT);
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, INVALID_STRLIT);
+            print_syntax_error(syntax_err);
             l->col = tmp1;
             l->line = tmp2;
             l->remaining = tmp3;
@@ -277,7 +232,8 @@ void step_lexer(lexer_t *l)
             l->line = line;
             char *tmp3 = l->remaining;
             l->remaining = start;
-            print_syntax_error(*l, UNCLOSED_STRLIT);
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, UNCLOSED_STRLIT);
+            print_syntax_error(syntax_err);
             l->col = tmp1;
             l->line = tmp2;
             l->remaining = tmp3;
@@ -290,7 +246,8 @@ void step_lexer(lexer_t *l)
             l->line = line;
             char *tmp3 = l->remaining;
             l->remaining = start;
-            print_syntax_error(*l, INVALID_STRLIT);
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, INVALID_STRLIT);
+            print_syntax_error(syntax_err);
             l->col = tmp1;
             l->line = tmp2;
             l->remaining = tmp3;
@@ -303,6 +260,7 @@ void step_lexer(lexer_t *l)
             tok.line = line;
             tok.lexeme = buffer;
             tok.type = STRING_LIT;
+            tok.abs_offset = l->remaining - l->start;
             token_array_push(&l->tokens, tok);
             l->remaining += 1;
         }
@@ -334,7 +292,8 @@ void step_lexer(lexer_t *l)
             l->line = line;
             char *tmp3 = l->remaining;
             l->remaining = start;
-            print_syntax_error(*l, INVALID_CHRLIT);
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, INVALID_CHRLIT);
+            print_syntax_error(syntax_err);
             l->col = tmp1;
             l->line = tmp2;
             l->remaining = tmp3;
@@ -348,7 +307,9 @@ void step_lexer(lexer_t *l)
             l->line = line;
             char *tmp3 = l->remaining;
             l->remaining = start;
-            print_syntax_error(*l, UNCLOSED_CHRLIT);
+
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, UNCLOSED_CHRLIT);
+            print_syntax_error(syntax_err);
             l->col = tmp1;
             l->line = tmp2;
             l->remaining = tmp3;
@@ -361,7 +322,8 @@ void step_lexer(lexer_t *l)
             l->line = line;
             char *tmp3 = l->remaining;
             l->remaining = start;
-            print_syntax_error(*l, INVALID_CHRLIT);
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, INVALID_CHRLIT);
+            print_syntax_error(syntax_err);
             l->col = tmp1;
             l->line = tmp2;
             l->remaining = tmp3 + 1;
@@ -374,6 +336,7 @@ void step_lexer(lexer_t *l)
             tok.line = line;
             tok.lexeme = buffer;
             tok.type = CHAR_LIT;
+            tok.abs_offset = l->remaining - l->start;
             token_array_push(&l->tokens, tok);
             l->remaining += 1;
         }
@@ -398,6 +361,7 @@ void step_lexer(lexer_t *l)
         tok.line = line;
         tok.lexeme = buffer;
         tok.type = NUM_LIT;
+        tok.abs_offset = l->remaining - l->start;
         token_array_push(&l->tokens, tok);
         l->remaining += k - 1;
     }
@@ -407,7 +371,8 @@ void step_lexer(lexer_t *l)
         int end = get_end_of_splitter(l->remaining);
         if (end == -1)
         {
-            print_syntax_error(*l, UNEXP_DELIM);
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, UNEXP_DELIM);
+            print_syntax_error(syntax_err);
             l->flag |= SYNTAX_ERROR;
             l->remaining++;
             l->col++;
@@ -423,6 +388,7 @@ void step_lexer(lexer_t *l)
             tok.line = l->line;
             tok.lexeme = buffer;
             tok.type = delim_type(buffer);
+            tok.abs_offset = l->remaining - l->start;
             token_array_push(&l->tokens, tok);
             l->col += end;
             l->remaining += end;
@@ -438,6 +404,7 @@ void step_lexer(lexer_t *l)
         tok.col = l->col;
         tok.line = l->line;
         tok.lexeme = buffer;
+        tok.abs_offset = l->remaining - l->start;
 
         if (is_keyword(buffer))
             tok.type = KEYWORD;
