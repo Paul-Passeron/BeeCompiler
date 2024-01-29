@@ -238,21 +238,25 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_bin_op:
     {
         struct ast_bin_op data = a->data.ast_bin_op;
+        (void)data;
     }
     break;
     case ast_if_stat:
     {
         struct ast_if_stat data = a->data.ast_if_stat;
+        (void)data;
     }
     break;
     case ast_for_loop:
     {
         struct ast_for_loop data = a->data.ast_for_loop;
+        (void)data;
     }
     break;
     case ast_while_loop:
     {
         struct ast_while_loop data = a->data.ast_while_loop;
+        (void)data;
     }
     break;
     case ast_function_def:
@@ -290,7 +294,7 @@ void pretty_print_aux(ast_t a, int prof)
         {
             for (int i = 0; i < prof + 1; i++)
                 printf("   ");
-            printf("[args]: ");
+            printf("[args]:\n");
             for (int i = 0; i < data.arity; i++)
             {
                 pretty_print_aux(data.args[i], prof + 2);
@@ -302,26 +306,33 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_assignement:
     {
         struct ast_assignement data = a->data.ast_assignement;
+        (void)data;
     }
     break;
     case ast_identifier:
     {
         struct ast_identifier data = a->data.ast_identifier;
+        (void)data;
     }
     break;
     case ast_literal:
     {
         struct ast_literal data = a->data.ast_literal;
+        for (int i = 0; i < prof + 2; i++)
+            printf("   ");
+        printf("%s\n", data.t.lexeme);
     }
     break;
     case ast_unary_op:
     {
         struct ast_unary_op data = a->data.ast_unary_op;
+        (void)data;
     }
     break;
     case ast_expression:
     {
         struct ast_expression data = a->data.ast_expression;
+        pretty_print_aux(data.expression, prof + 2);
     }
     break;
     case ast_program:
@@ -335,11 +346,13 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_return:
     {
         struct ast_return data = a->data.ast_return;
+        (void)data;
     }
     break;
     case ast_funccallargs:
     {
         struct ast_funccallargs data = a->data.ast_funccallargs;
+        (void)data;
     }
     break;
     case ast_scope:

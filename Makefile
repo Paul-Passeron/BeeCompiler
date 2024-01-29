@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -g
+CFLAGS=-Wall -Wextra
 
 all:main
 
@@ -17,4 +17,4 @@ main: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o
 
 clean:
 	rm -rf *.o
-	rm main
+	rm -f main

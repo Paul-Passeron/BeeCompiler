@@ -368,21 +368,18 @@ void fold_scope(parser_t *p)
         return;
     }
     ast_t popped = ast_stack_pop(&p->scope);
-
-    if (p->scope.length == 1)
+    printf("POPPED: %d\n", popped->tag);
+    if (p->scope.length == 0)
     {
-
         ast_stack_push(&p->prog, popped);
         return;
     }
 
     if (is_empty_expression(popped))
     {
-        printf("Expression is empty\n");
         return;
     }
-    if (p->scope.length < 1)
-        return;
+
     ast_t folder = ast_stack_pop(&p->scope);
 
     printf("FOLDER: %d\n", folder->tag);
@@ -431,7 +428,6 @@ void fold_scope(parser_t *p)
     break;
     case ast_function_call:
     {
-        struct ast_function_call data = folder->data.ast_function_call;
         printf("FUNCTION CALL REACHED\n");
         struct ast_funccallargs arguments = popped->data.ast_funccallargs;
         struct ast_function_call *def = &folder->data.ast_function_call;
@@ -496,9 +492,9 @@ void fold_scope(parser_t *p)
     break;
     case ast_funccallargs:
     {
-        struct ast_funccallargs data = folder->data.ast_funccallargs;
-
-        (void)data;
+        struct ast_funccallargs *data = &folder->data.ast_funccallargs;
+        data->args[data->length++] = popped;
+        ast_stack_push(&p->scope, folder);
     }
     break;
     case ast_scope:
@@ -510,13 +506,23 @@ void fold_scope(parser_t *p)
     break;
     }
 
-    ast_stack_push(&p->scope, folder);
+    // ast_stack_push(&p->scope, folder);
 }
-
-void step_parser(parser_t *p)
+/* f */
+void step_parser(parser_t *p) /*  */
 {
     // Maybe delegate treating statements by other functions (mainly for operations)
-
+    // if (p->scope.length > 0)
+    // {
+    //     ast_t a = ast_stack_peek(&p->scope);
+    //     if (a->tag == ast_expression && !is_empty_expression(a))
+    //     {
+    //         fold_scope(p);
+    //         ast_t arg = new_ast((node_t){
+    //             ast_expression, {.ast_expression = {.expression = NULL}}});
+    //         ast_stack_push(&p->scope, arg);
+    //     }
+    // }
     // Supposing there still are tokens
     parser_token_t curr = peek_type(*p, 0, NULL);
     printf("CURR(%d, %d:%d): %d\n", p->current, p->scope.length, p->scope.length > 0 ? ast_stack_peek(&p->scope)->tag : -1, curr);
@@ -536,6 +542,9 @@ void step_parser(parser_t *p)
     else if (curr == del_closebra)
     {
         fold_scope(p);
+        // ast_t arg = new_ast((node_t){
+        //     ast_expression, {.ast_expression = {.expression = NULL}}});
+        // ast_stack_push(&p->scope, arg);
         p->current++;
     }
     else if (curr == del_openparen)
@@ -556,34 +565,37 @@ void step_parser(parser_t *p)
     {
         fold_scope(p);
         // make sure that we are in a function call
-        ast_t peeked = ast_stack_peek(&p->scope);
-        if (peeked->tag == ast_function_call)
-        {
-            ast_t arg = new_ast((node_t){
-                ast_expression, {.ast_expression = {.expression = NULL}}});
-            ast_stack_push(&p->scope, arg);
-            p->current++;
-        }
-        else
-        {
-            p->current -= 3;
-            if (p->current >= 0)
-            {
-                error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, INVALID_FUNCALL);
-                print_syntax_error(err);
-            }
-            else
-            {
-                error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, -1);
-                print_syntax_error(err);
-            }
-            exit(3);
-        }
+        ast_t arg = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, arg);
         p->current++;
+
+        // ast_t peeked = ast_stack_peek(&p->scope);
+        // if (peeked->tag == ast_funccallargs)
+        // {
+        // }
+        // else
+        // {
+        //     p->current -= 3;
+        //     if (p->current >= 0)
+        //     {
+        //         error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, INVALID_FUNCALL);
+        //         print_syntax_error(err);
+        //     }
+        //     else
+        //     {
+        //         error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, -1);
+        //         print_syntax_error(err);
+        //     }
+        //     exit(3);
+        // }
     }
     else if (curr == del_semicol)
     {
         fold_scope(p);
+        ast_t arg = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, arg);
         p->current++;
     }
     else if (curr == tok_strlit || curr == tok_numlit || curr == tok_charlit)
@@ -631,7 +643,16 @@ void step_parser(parser_t *p)
             ast_t peeked = ast_stack_peek(&p->scope);
             if (peeked->tag != ast_expression)
             {
-                printf("TODO: Problem: identifier can only be added to expressions\n");
+                printf("TODO: Problem: identifier can only be added to expressions. got: ");
+                print_tag(*peeked);
+                printf("\n");
+                printf("///////\n");
+                for (int i = 0; i < p->scope.length; i++)
+                {
+                    pretty_print(p->scope.data[p->scope.length - 1 - i]);
+                    printf("///////\n");
+                }
+
                 exit(3);
             }
             ast_t iden = new_ast((node_t){ast_identifier, {.ast_identifier = {.t = peek_token(*p, 0, NULL)}}});

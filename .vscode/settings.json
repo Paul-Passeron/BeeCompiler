@@ -2,5 +2,6 @@
     "files.associations": {
         "stdlib.h": "c",
         "common.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }
