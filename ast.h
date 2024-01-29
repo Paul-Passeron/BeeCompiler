@@ -25,6 +25,7 @@ struct node_t
         ast_return,
         ast_funccallargs,
         ast_scope,
+        ast_auto,
     } tag;
     union
     {
@@ -122,6 +123,11 @@ struct node_t
             int length;
             int capacity;
         } ast_scope;
+
+        struct ast_auto
+        {
+            token_t t;
+        } ast_auto;
 
     } data;
 };

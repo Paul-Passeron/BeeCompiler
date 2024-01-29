@@ -22,16 +22,12 @@ int main(int argc, char **argv)
     while (*lexer.remaining)
         step_lexer(&lexer);
 
-    print_token_array(lexer);
-
     parser_t parser;
     parser_create(&parser, lexer);
 
-    // printf("Length: %d\n", parser.scope.length);
     build_ast(&parser);
     ast_t ast = prog_to_ast(&parser);
 
-    printf("\n\n");
     pretty_print(ast);
     free(ast);
     parser_free(&parser);

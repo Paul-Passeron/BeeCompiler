@@ -192,7 +192,7 @@ parser_token_t get_type(token_t t)
             switch (*t.lexeme)
             {
             case '=':
-                return op_eq;
+                return op_assign;
             case '+':
                 return op_plus;
             case '-':
@@ -217,7 +217,7 @@ parser_token_t get_type(token_t t)
         case 2:
         {
             if (strcmp(t.lexeme, "==") == 0)
-                return op_assign;
+                return op_eq;
             if (strcmp(t.lexeme, "&&") == 0)
                 return op_and;
             if (strcmp(t.lexeme, "||") == 0)
@@ -273,10 +273,6 @@ token_array_t parse_functiondef_args(parser_t p, int begin, int l)
         token_t tok = peek_token(p, begin + i, NULL);
         if (!flip_flop && tok.type != IDENTIFIER)
         {
-            // raise syntax error here
-            // function def with invalid arguments
-            // printf("TODO: Syntax error (invalid argument(s))\n");
-
             error_reporter_t err = create_error_p(p, SYNTAX_ERROR, INVALID_FUNDEF);
             print_syntax_error(err);
             exit(3);
@@ -305,7 +301,6 @@ void parse_functiondef_no_body(parser_t *p, int k)
     // Problem if we get err_tok
 
     token_array_t args = parse_functiondef_args(*p, p->current + 2, k - 2);
-    // printf("Number of arguments: %d\n", args.length);
     ast_t fun_def = new_ast((node_t){
         ast_function_def, {.ast_function_def = {.t = peek_token(*p, 0, NULL), .args = args, .body = NULL}}});
     ast_stack_push(&p->scope, fun_def);
@@ -341,7 +336,6 @@ token_array_t *parse_functioncall_args(parser_t *p, int begin, int n, int *l)
 
 void parse_functioncall_headonly(parser_t *p)
 {
-    printf("Inside function call\n");
     ast_t fun_call = new_ast((node_t){
         ast_function_call, {.ast_function_call = {.t = peek_token(*p, 0, NULL), .args = NULL, .arity = -1, .capacity = -1}}});
     p->current += 1;
@@ -367,7 +361,7 @@ void fold_scope(parser_t *p)
         return;
     }
     ast_t popped = ast_stack_pop(&p->scope);
-    printf("POPPED: %d\n", popped->tag);
+    // printf("POPPED: %d\n", popped->tag);
     if (p->scope.length == 0)
     {
         ast_stack_push(&p->prog, popped);
@@ -381,7 +375,7 @@ void fold_scope(parser_t *p)
 
     ast_t folder = ast_stack_pop(&p->scope);
 
-    printf("FOLDER: %d\n", folder->tag);
+    // printf("FOLDER: %d\n", folder->tag);
     switch (folder->tag)
     {
     case ast_bin_op:
@@ -419,15 +413,12 @@ void fold_scope(parser_t *p)
     case ast_function_def:
     {
         struct ast_function_def *data = &folder->data.ast_function_def;
-        printf("FUNCTION DEF REACHED\n");
-        // means its the body so we have an ast_scope
         data->body = popped;
         ast_stack_push(&p->scope, folder);
     }
     break;
     case ast_function_call:
     {
-        printf("FUNCTION CALL REACHED\n");
         struct ast_funccallargs arguments = popped->data.ast_funccallargs;
         struct ast_function_call *def = &folder->data.ast_function_call;
         def->args = arguments.args;
@@ -463,7 +454,6 @@ void fold_scope(parser_t *p)
     break;
     case ast_expression:
     {
-        printf("Got an expression !\n");
         struct ast_expression *data = &folder->data.ast_expression;
         if (data->expression == NULL)
         {
@@ -503,13 +493,20 @@ void fold_scope(parser_t *p)
         ast_stack_push(&p->scope, folder);
     }
     break;
+    case ast_auto:
+    {
+        // Should be an lvalue but impossible since is parsed in the step_parse func
+        printf("Error: Lonely auto keyword..\n");
+        exit(5);
+    }
+    break;
     }
 }
 void step_parser(parser_t *p)
 {
 
     parser_token_t curr = peek_type(*p, 0, NULL);
-    printf("CURR(%d, %d:%d): %d\n", p->current, p->scope.length, p->scope.length > 0 ? ast_stack_peek(&p->scope)->tag : -1, curr);
+    // printf("CURR(%d, %d:%d): %d\n", p->current, p->scope.length, p->scope.length > 0 ? ast_stack_peek(&p->scope)->tag : -1, curr);
     if (curr == err_tok)
     {
         p->current++;
@@ -520,6 +517,9 @@ void step_parser(parser_t *p)
         ast_t s = new_ast((node_t){
             ast_scope, {.ast_scope = {.statements = malloc(sizeof(ast_t) * 256), .capacity = 256, .length = 0}}});
         ast_stack_push(&p->scope, s);
+        ast_t expr = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, expr);
         p->current++;
     }
     else if (curr == del_closebra)
@@ -572,7 +572,6 @@ void step_parser(parser_t *p)
         p->current++;
     }
 
-    // Trying to parse it as a function definition
     else if (curr == tok_iden)
     {
         parser_token_t next = peek_type(*p, 1, NULL);
@@ -595,6 +594,13 @@ void step_parser(parser_t *p)
                 return;
             }
         }
+        else if (next == op_assign)
+        {
+            ast_t assignement = new_ast((node_t){
+                ast_assignement, {.ast_assignement = {.t = peek_token(*p, 0, NULL), .rhs = NULL}}});
+            ast_stack_push(&p->scope, assignement);
+            p->current++;
+        }
         else
         {
             // Add identifier to what should be an expression
@@ -602,15 +608,6 @@ void step_parser(parser_t *p)
             if (peeked->tag != ast_expression)
             {
                 printf("TODO: Problem: identifier can only be added to expressions. got: ");
-                print_tag(*peeked);
-                printf("\n");
-                printf("///////\n");
-                for (int i = 0; i < p->scope.length; i++)
-                {
-                    pretty_print(p->scope.data[p->scope.length - 1 - i]);
-                    printf("///////\n");
-                }
-
                 exit(3);
             }
             ast_t iden = new_ast((node_t){ast_identifier, {.ast_identifier = {.t = peek_token(*p, 0, NULL)}}});
@@ -623,6 +620,32 @@ void step_parser(parser_t *p)
             p->current++;
         }
     }
+    else if (curr == key_auto)
+    {
+        token_t var = peek_token(*p, 1, NULL);
+        parser_token_t eq = peek_type(*p, 2, NULL);
+
+        ast_t auto_var = new_ast((node_t){
+            ast_auto, {.ast_auto = {.t = var}}});
+        ast_t expr = new_ast((node_t){ast_expression, {.ast_expression = {NULL}}});
+        ast_stack_push(&p->scope, auto_var);
+        ast_stack_push(&p->scope, expr);
+        p->current++;
+
+        // not an assignment
+        if (eq != op_assign)
+        {
+            p->current++;
+            // We'll do the exact same thing but will increment past the identifier
+        }
+        else if (eq != del_semicol)
+        {
+            // syntax error
+            printf("Syntax Error: unassigned / unterminated variable declaration\n");
+            exit(6);
+        }
+    }
+
     else
     {
         p->current++;

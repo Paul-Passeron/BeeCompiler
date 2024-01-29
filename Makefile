@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra
 
-all:main
+all:clean main
 
 stack.o: stack.h
 main.o: stack.h

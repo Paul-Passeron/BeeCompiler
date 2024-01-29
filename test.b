@@ -1,6 +1,5 @@
 main()
 {
-    func(a);
-    func(b);
-    func(c, "bibi");
+    auto a;
+    a = 7;
 }

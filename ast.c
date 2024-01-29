@@ -133,6 +133,8 @@ void free_ast(ast_t a)
         free(data.args);
     }
     break;
+    case ast_auto:
+        break;
     }
     free(a); // No need to use FREE here
 }
@@ -243,6 +245,9 @@ void print_tag(node_t t)
     case ast_scope:
         printf("ast_scope");
         break;
+    case ast_auto:
+        printf("ast_auto");
+        break;
     }
 }
 
@@ -251,7 +256,6 @@ void pretty_print_aux(ast_t a, int prof)
     for (int i = 0; i < prof; i++)
         printf("   ");
     print_tag(*a);
-    printf("\n");
     switch (a->tag)
     {
     case ast_bin_op:
@@ -281,6 +285,7 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_function_def:
     {
         struct ast_function_def data = a->data.ast_function_def;
+        printf("\n");
         for (int i = 0; i < prof + 1; i++)
             printf("   ");
         printf("[name]: ");
@@ -305,6 +310,8 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_function_call:
     {
         struct ast_function_call data = a->data.ast_function_call;
+        printf("\n");
+
         for (int i = 0; i < prof + 1; i++)
             printf("   ");
         printf("[name]: ");
@@ -331,7 +338,7 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_identifier:
     {
         struct ast_identifier data = a->data.ast_identifier;
-        (void)data;
+        printf(": %s\n", data.t.lexeme);
     }
     break;
     case ast_literal:
@@ -351,12 +358,16 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_expression:
     {
         struct ast_expression data = a->data.ast_expression;
+        printf("\n");
+
         pretty_print_aux(data.expression, prof + 2);
     }
     break;
     case ast_program:
     {
         struct ast_program data = a->data.ast_program;
+        printf("\n");
+
         for (int i = 0; i < data.length; i++)
             pretty_print_aux(data.program[i], prof + 2);
         printf("\n");
@@ -377,11 +388,19 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_scope:
     {
         struct ast_scope data = a->data.ast_scope;
+        printf("\n");
+
         for (int i = 0; i < data.length; i++)
         {
             pretty_print_aux(data.statements[i], prof + 2);
             printf("\n");
         }
+    }
+    break;
+    case ast_auto:
+    {
+        struct ast_auto data = a->data.ast_auto;
+        printf(": %s\n", data.t.lexeme);
     }
     break;
     }
