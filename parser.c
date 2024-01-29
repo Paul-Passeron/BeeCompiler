@@ -104,7 +104,6 @@ void parser_create(parser_t *p, lexer_t l)
     for (int i = 0; i < l.tokens.length; i++)
         token_array_push(&p->tokens, l.tokens.data[i]);
     stack_create(&p->scope_variables);
-    // p->ast = new_ast(empty_program());
     p->current = 0;
     ast_stack_create(&p->scope);
     ast_stack_create(&p->prog);
@@ -117,9 +116,9 @@ void parser_free(parser_t *p)
     for (int i = 0; i < p->tokens.length; i++)
         free(p->tokens.data[i].lexeme);
     token_array_free(&p->tokens);
-
-    // free_ast(p->ast);
-    // check if scope is empty (it should be)
+    ast_stack_free(&p->scope);
+    ast_stack_free(&p->prog);
+    stack_free(&p->scope_variables);
 }
 
 token_t peek_token(parser_t p, int i, int *flag)
@@ -505,25 +504,10 @@ void fold_scope(parser_t *p)
     }
     break;
     }
-
-    // ast_stack_push(&p->scope, folder);
 }
-/* f */
-void step_parser(parser_t *p) /*  */
+void step_parser(parser_t *p)
 {
-    // Maybe delegate treating statements by other functions (mainly for operations)
-    // if (p->scope.length > 0)
-    // {
-    //     ast_t a = ast_stack_peek(&p->scope);
-    //     if (a->tag == ast_expression && !is_empty_expression(a))
-    //     {
-    //         fold_scope(p);
-    //         ast_t arg = new_ast((node_t){
-    //             ast_expression, {.ast_expression = {.expression = NULL}}});
-    //         ast_stack_push(&p->scope, arg);
-    //     }
-    // }
-    // Supposing there still are tokens
+
     parser_token_t curr = peek_type(*p, 0, NULL);
     printf("CURR(%d, %d:%d): %d\n", p->current, p->scope.length, p->scope.length > 0 ? ast_stack_peek(&p->scope)->tag : -1, curr);
     if (curr == err_tok)
@@ -532,8 +516,7 @@ void step_parser(parser_t *p) /*  */
     }
     else if (curr == del_openbra)
     {
-        // NEW SCOPE
-        // ast_t peeked = ast_stack_peek(&p->scope);
+
         ast_t s = new_ast((node_t){
             ast_scope, {.ast_scope = {.statements = malloc(sizeof(ast_t) * 256), .capacity = 256, .length = 0}}});
         ast_stack_push(&p->scope, s);
@@ -542,15 +525,10 @@ void step_parser(parser_t *p) /*  */
     else if (curr == del_closebra)
     {
         fold_scope(p);
-        // ast_t arg = new_ast((node_t){
-        //     ast_expression, {.ast_expression = {.expression = NULL}}});
-        // ast_stack_push(&p->scope, arg);
         p->current++;
     }
     else if (curr == del_openparen)
     {
-        // NEW SCOPE
-        // ast_t peeked = ast_stack_peek(&p->scope);
         ast_t expr = new_ast((node_t){
             ast_expression, {.ast_expression = {.expression = NULL}}});
         ast_stack_push(&p->scope, expr);
@@ -564,31 +542,10 @@ void step_parser(parser_t *p) /*  */
     else if (curr == del_comma)
     {
         fold_scope(p);
-        // make sure that we are in a function call
         ast_t arg = new_ast((node_t){
             ast_expression, {.ast_expression = {.expression = NULL}}});
         ast_stack_push(&p->scope, arg);
         p->current++;
-
-        // ast_t peeked = ast_stack_peek(&p->scope);
-        // if (peeked->tag == ast_funccallargs)
-        // {
-        // }
-        // else
-        // {
-        //     p->current -= 3;
-        //     if (p->current >= 0)
-        //     {
-        //         error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, INVALID_FUNCALL);
-        //         print_syntax_error(err);
-        //     }
-        //     else
-        //     {
-        //         error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, -1);
-        //         print_syntax_error(err);
-        //     }
-        //     exit(3);
-        // }
     }
     else if (curr == del_semicol)
     {

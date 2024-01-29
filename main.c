@@ -27,15 +27,14 @@ int main(int argc, char **argv)
     parser_t parser;
     parser_create(&parser, lexer);
 
-       // printf("Length: %d\n", parser.scope.length);
+    // printf("Length: %d\n", parser.scope.length);
     build_ast(&parser);
     ast_t ast = prog_to_ast(&parser);
 
     printf("\n\n");
     pretty_print(ast);
-
-    lexer_free(&lexer);
+    free(ast);
     parser_free(&parser);
-
+    lexer_free(&lexer);
     return 0;
 }

@@ -112,8 +112,27 @@ void free_ast(ast_t a)
         struct ast_return data = a->data.ast_return;
         free_ast(data.expression);
     }
-    default:
-        break;
+    break;
+    case ast_scope:
+    {
+        struct ast_scope data = a->data.ast_scope;
+        for (int i = 0; i < data.length; i++)
+        {
+            free_ast(data.statements[i]);
+        }
+        free(data.statements);
+    }
+    break;
+    case ast_funccallargs:
+    {
+        struct ast_funccallargs data = a->data.ast_funccallargs;
+        for (int i = 0; i < data.length; i++)
+        {
+            free_ast(data.args[i]);
+        }
+        free(data.args);
+    }
+    break;
     }
     free(a); // No need to use FREE here
 }
