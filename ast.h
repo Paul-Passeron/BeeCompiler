@@ -22,6 +22,7 @@ struct node_t
         ast_unary_op,
         ast_statement,
         ast_program,
+        ast_return,
     } tag;
     union
     {
@@ -98,6 +99,11 @@ struct node_t
             node_t **program;
             int length;
         } ast_program;
+
+        struct ast_return
+        {
+            node_t *expression;
+        } ast_return;
 
     } data;
 };

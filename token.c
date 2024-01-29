@@ -83,8 +83,8 @@ void print_type(token_type_t t)
 
 void print_token(token_t tok)
 {
-    printf("{\n");
-    printf("    col:line: %d; %d\n", tok.col, tok.line);
+    printf("\n{");
+    printf("   col:line: %d; %d\n", tok.col, tok.line);
     printf("    lexeme: %s\n", tok.lexeme);
     printf("    type: ");
     print_type(tok.type);

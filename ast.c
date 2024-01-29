@@ -106,6 +106,11 @@ void free_ast(ast_t a)
             free_ast(data.program[i]);
     }
     break;
+    case ast_return:
+    {
+        struct ast_return data = a->data.ast_return;
+        free_ast(data.expression);
+    }
     default:
         break;
     }

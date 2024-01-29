@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="97.184586mm"
+   height="107.3382mm"
+   viewBox="0 0 97.184586 107.3382"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   sodipodi:docname="beelogo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showguides="false"
+     inkscape:zoom="1.3843855"
+     inkscape:cx="170.47275"
+     inkscape:cy="249.56921"
+     inkscape:window-width="1920"
+     inkscape:window-height="991"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <rect
+       x="211.46004"
+       y="275.81744"
+       width="23.495552"
+       height="40.861832"
+       id="rect13" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath7">
+      <g
+         inkscape:label="Clip"
+         id="use7"
+         style="fill:#337cdb;fill-opacity:1">
+        <path
+           style="fill:#337cdb;fill-opacity:1;stroke:#f10b0b;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"
+           d="M 72.63884,174.57648 C 66.455301,173.288 42.33395,159.95063 31.334689,151.73826 c -2.615126,-1.95253 -4.17577,-3.50505 -4.554619,-4.53092 -1.245024,-3.37135 -1.910149,-12.50288 -1.91239,-26.25522 -0.0024,-14.87014 0.796832,-24.597993 2.220613,-27.027492 2.500734,-4.267177 31.858683,-21.86341 43.590988,-26.127072 1.562269,-0.567746 1.7858,-0.613789 2.973125,-0.612371 1.157589,0.0013 1.436688,0.05596 2.837982,0.554959 6.333294,2.255287 20.523628,9.873083 31.893522,17.121396 6.40125,4.080804 10.95834,7.571272 11.83261,9.063088 1.41726,2.418376 2.22128,12.176882 2.22128,26.959912 0,14.77893 -0.80407,24.54164 -2.22034,26.95832 -1.84557,3.14921 -18.22941,13.68452 -33.591419,21.60029 -5.937184,3.05933 -10.381848,4.91188 -12.63578,5.26664 -0.222986,0.0351 -0.831125,-0.0249 -1.351421,-0.13331 z"
+           id="path13" />
+      </g>
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-56.762548,-70.216484)">
+    <path
+       style="fill:#ffaaaa;fill-opacity:1;stroke:none;stroke-width:0.433406;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 57.840888,147.44281 c -0.7961,-4.3206 -1.07834,-12.01402 -1.07834,-23.70377 0,-15.74041 0.70419,-24.309816 2.20861,-26.876916 2.51898,-4.29832 32.78244,-22.40522 43.741372,-26.17086 2.02932,-0.6973 3.66443,-0.63292 5.9832,0.23555 8.75539,3.27928 29.33178,14.94858 38.56199,21.86932 2.79513,2.09577 4.99638,4.72839 4.75138,4.9603 -0.19566,0.18521 -93.104262,51.479216 -93.539882,51.646336 -0.24176,0.0927 -0.44088,-0.9426 -0.62833,-1.95996 z"
+       id="path9"
+       sodipodi:nodetypes="sssssssss" />
+    <path
+       style="fill:#ff2a2a;fill-opacity:1;stroke:none;stroke-width:0.433406;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 148.496,147.89876 c -6.41696,-3.54119 -31.09476,-17.33957 -36.11762,-20.19484 -5.15481,-2.93028 -7.15356,-4.13231 -7.0395,-4.23351 0.19273,-0.17098 46.56537,-26.094926 46.6785,-26.094926 0.10894,0 0.6583,2.40697 0.87242,3.822386 1.0083,6.66553 1.37026,24.03096 0.75688,36.31274 -0.35831,7.17448 -1.04382,12.23166 -1.65801,12.23166 -0.0836,0 -1.65534,-0.82958 -3.49267,-1.84351 z"
+       id="path11" />
+    <path
+       style="fill:#aa0000;fill-opacity:1;stroke:none;stroke-width:0.433406;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="m 103.77799,177.28822 c -1.83548,-0.51163 -5.331022,-1.88124 -10.005792,-4.21569 -13.32992,-6.65658 -29.4996,-16.84126 -33.73833,-21.06696 -1.00257,-0.9995 -1.75448,-2.33183 -1.52919,-2.53197 0.13308,-0.11823 46.430522,-25.94792 46.430522,-25.94792 0.36588,-0.16671 15.21051,8.63327 23.215,13.03821 7.99003,4.39699 24.10794,13.26605 24.10794,13.26605 0.11676,0.0654 -0.73399,1.5705 -1.37343,2.18489 -6.3342,6.08616 -34.10891,22.2501 -43.18822,25.11825 -1.72773,0.54579 -2.60234,0.52202 -3.9185,0.15514 z"
+       id="path12"
+       sodipodi:nodetypes="ssssssssss" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text13"
+       style="white-space:pre;shape-inside:url(#rect13);fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2.26772;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48.7902px;line-height:0;font-family:'Berlin Sans FB';-inkscape-font-specification:'Berlin Sans FB';white-space:pre;inline-size:34.6171;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:9.2202;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       x="89.644547"
+       y="142.03427"
+       id="text14"
+       transform="matrix(1.7211771,0,0,1.7277842,-92.99761,-90.802092)"><tspan
+         x="89.644547"
+         y="142.03427"
+         id="tspan2"><tspan
+           style="text-align:center;text-anchor:middle;stroke-width:9.22019"
+           id="tspan1">B</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:24.0924px;line-height:0;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, ';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:4.5529;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       x="131.0947"
+       y="129.14961"
+       id="text15"
+       transform="scale(0.9767462,1.0238074)"><tspan
+         sodipodi:role="line"
+         id="tspan15"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Bernard MT Condensed';-inkscape-font-specification:'Bernard MT Condensed, ';stroke-width:4.55289"
+         x="131.0947"
+         y="129.14961">ee</tspan></text>
+  </g>
+</svg>

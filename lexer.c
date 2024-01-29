@@ -17,6 +17,7 @@ int is_splitter(char c)
 {
     char splitters[] = " \n=+-*/;{}()<>\%|&,\"\'1234567890!";
     int splitters_count = sizeof(splitters) - 1;
+
     for (int i = 0; i < splitters_count; i++)
     {
         if (c == splitters[i])
@@ -139,6 +140,7 @@ int get_end_of_splitter(char *s)
 
 int is_keyword(char *s)
 {
+
     char *keywords[] = {"auto", "else", "if", "return", "while", "for"};
     int n_k = sizeof(keywords) / sizeof(char *) - 1;
     for (int i = 0; i < n_k; i++)
@@ -218,7 +220,6 @@ int is_char_litteral(char *s)
 
 void step_lexer(lexer_t *l)
 {
-    // No support for string, char and int litterals
 
     while (*l->remaining && is_whitespace(*l->remaining))
     {
