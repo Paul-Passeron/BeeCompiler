@@ -592,7 +592,8 @@ void step_parser(parser_t *p) /*  */
     }
     else if (curr == del_semicol)
     {
-        fold_scope(p);
+        while (ast_stack_peek(&p->scope)->tag != ast_scope)
+            fold_scope(p);
         ast_t arg = new_ast((node_t){
             ast_expression, {.ast_expression = {.expression = NULL}}});
         ast_stack_push(&p->scope, arg);
