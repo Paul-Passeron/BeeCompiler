@@ -17,6 +17,7 @@ ast_t new_ast(node_t node)
 
 node_t empty_program()
 {
+
     return (node_t){
         ast_program, {.ast_program = {0}}};
 }
@@ -173,3 +174,185 @@ ast_t ast_stack_peek(ast_stack_t *s)
     }
     return s->data[s->length - 1];
 }
+
+void print_tag(node_t t)
+{
+    switch (t.tag)
+    {
+    case ast_bin_op:
+        printf("ast_bin_op");
+        break;
+    case ast_if_stat:
+        printf("ast_if_stat");
+        break;
+    case ast_for_loop:
+        printf("ast_for_loop");
+        break;
+    case ast_while_loop:
+        printf("ast_while_loop");
+        break;
+    case ast_function_def:
+        printf("ast_function_def");
+        break;
+    case ast_function_call:
+        printf("ast_function_call");
+        break;
+    case ast_assignement:
+        printf("ast_assignement");
+        break;
+    case ast_identifier:
+        printf("ast_identifier");
+        break;
+    case ast_literal:
+        printf("ast_literal");
+        break;
+    case ast_unary_op:
+        printf("ast_unary_op");
+        break;
+    case ast_expression:
+        printf("ast_expression");
+        break;
+    case ast_program:
+        printf("ast_program");
+        break;
+    case ast_return:
+        printf("ast_return");
+        break;
+    case ast_funccallargs:
+        printf("ast_funccallargs");
+        break;
+    case ast_scope:
+        printf("ast_scope");
+        break;
+    }
+}
+
+void pretty_print_aux(ast_t a, int prof)
+{
+    for (int i = 0; i < prof; i++)
+        printf("   ");
+    print_tag(*a);
+    printf("\n");
+    switch (a->tag)
+    {
+    case ast_bin_op:
+    {
+        struct ast_bin_op data = a->data.ast_bin_op;
+    }
+    break;
+    case ast_if_stat:
+    {
+        struct ast_if_stat data = a->data.ast_if_stat;
+    }
+    break;
+    case ast_for_loop:
+    {
+        struct ast_for_loop data = a->data.ast_for_loop;
+    }
+    break;
+    case ast_while_loop:
+    {
+        struct ast_while_loop data = a->data.ast_while_loop;
+    }
+    break;
+    case ast_function_def:
+    {
+        struct ast_function_def data = a->data.ast_function_def;
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("[name]: ");
+        printf("%s\n", data.t.lexeme);
+        if (data.args.length > 0)
+        {
+            for (int i = 0; i < prof + 1; i++)
+                printf("   ");
+            printf("[args]: ");
+            for (int i = 0; i < data.args.length; i++)
+            {
+                printf("'%s' ", data.args.data[i].lexeme);
+            }
+            printf("\n");
+        }
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("[body]:\n");
+        pretty_print_aux(data.body, prof + 2);
+    }
+    break;
+    case ast_function_call:
+    {
+        struct ast_function_call data = a->data.ast_function_call;
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("[name]: ");
+        printf("%s\n", data.t.lexeme);
+        if (data.arity > 0)
+        {
+            for (int i = 0; i < prof + 1; i++)
+                printf("   ");
+            printf("[args]: ");
+            for (int i = 0; i < data.arity; i++)
+            {
+                pretty_print_aux(data.args[i], prof + 2);
+                printf("\n");
+            }
+        }
+    }
+    break;
+    case ast_assignement:
+    {
+        struct ast_assignement data = a->data.ast_assignement;
+    }
+    break;
+    case ast_identifier:
+    {
+        struct ast_identifier data = a->data.ast_identifier;
+    }
+    break;
+    case ast_literal:
+    {
+        struct ast_literal data = a->data.ast_literal;
+    }
+    break;
+    case ast_unary_op:
+    {
+        struct ast_unary_op data = a->data.ast_unary_op;
+    }
+    break;
+    case ast_expression:
+    {
+        struct ast_expression data = a->data.ast_expression;
+    }
+    break;
+    case ast_program:
+    {
+        struct ast_program data = a->data.ast_program;
+        for (int i = 0; i < data.length; i++)
+            pretty_print_aux(data.program[i], prof + 2);
+        printf("\n");
+    }
+    break;
+    case ast_return:
+    {
+        struct ast_return data = a->data.ast_return;
+    }
+    break;
+    case ast_funccallargs:
+    {
+        struct ast_funccallargs data = a->data.ast_funccallargs;
+    }
+    break;
+    case ast_scope:
+    {
+        struct ast_scope data = a->data.ast_scope;
+        for (int i = 0; i < data.length; i++)
+        {
+            pretty_print_aux(data.statements[i], prof + 2);
+            printf("\n");
+        }
+    }
+    break;
+    }
+}
+
+void pretty_print(ast_t a) { pretty_print_aux(a, 0); }

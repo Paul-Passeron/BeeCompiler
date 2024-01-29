@@ -12,9 +12,9 @@ typedef struct
 {
     token_array_t tokens;
     int current;
-    ast_t ast;
     stack_t scope_variables;
     ast_stack_t scope;
+    ast_stack_t prog;
     char *filename;
     char *text;
 } parser_t;
@@ -23,7 +23,7 @@ void parser_create(parser_t *p, lexer_t l); // should copy tokens so it cannot b
 void parser_free(parser_t *p);
 
 // grows the ast
-void step_parser(parser_t *p);
+// void step_parser(parser_t *p);
 
 typedef enum
 {
@@ -66,5 +66,10 @@ typedef enum
     err_tok
 
 } parser_token_t;
+
+void parser_tok_name(parser_token_t t);
+
+ast_t prog_to_ast(parser_t *p);
+void build_ast(parser_t *p);
 
 #endif // PARSER_H

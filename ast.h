@@ -23,6 +23,8 @@ struct node_t
         ast_expression,
         ast_program,
         ast_return,
+        ast_funccallargs,
+        ast_scope,
     } tag;
     union
     {
@@ -107,6 +109,20 @@ struct node_t
             node_t *expression;
         } ast_return;
 
+        struct ast_funccallargs
+        {
+            node_t **args;
+            int length;
+            int capacity;
+        } ast_funccallargs;
+
+        struct ast_scope
+        {
+            node_t **statements;
+            int length;
+            int capacity;
+        } ast_scope;
+
     } data;
 };
 
@@ -130,5 +146,9 @@ void ast_stack_free(ast_stack_t *s);
 void ast_stack_push(ast_stack_t *s, ast_t a);
 ast_t ast_stack_pop(ast_stack_t *s);
 ast_t ast_stack_peek(ast_stack_t *s);
+
+void print_tag(node_t t);
+
+void pretty_print(ast_t a);
 
 #endif // AST_H
