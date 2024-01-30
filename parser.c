@@ -361,7 +361,9 @@ void fold_scope(parser_t *p)
         return;
     }
     ast_t popped = ast_stack_pop(&p->scope);
-    // printf("POPPED: %d\n", popped->tag);
+    // printf("POPPED: ");
+    // print_tag(*popped);
+    // printf("\n");
     if (p->scope.length == 0)
     {
         ast_stack_push(&p->prog, popped);
@@ -375,7 +377,9 @@ void fold_scope(parser_t *p)
 
     ast_t folder = ast_stack_pop(&p->scope);
 
-    // printf("FOLDER: %d\n", folder->tag);
+    // printf("FOLDER: ");
+    // print_tag(*folder);
+    // printf("\n");
     switch (folder->tag)
     {
     case ast_bin_op:
@@ -430,7 +434,9 @@ void fold_scope(parser_t *p)
     break;
     case ast_assignement:
     {
-        struct ast_assignement data = folder->data.ast_assignement;
+        struct ast_assignement *data = &folder->data.ast_assignement;
+        data->rhs = popped;
+        ast_stack_push(&p->scope, folder);
         (void)data;
     }
     break;
@@ -462,8 +468,15 @@ void fold_scope(parser_t *p)
         }
         else
         {
-            printf("Error: Could not fold expression\n");
-            exit(3);
+            // printf("Error: Could not fold expression\n");
+            // exit(3);
+            ast_stack_push(&p->scope, folder);
+            fold_scope(p);
+            ast_t expr = new_ast((node_t){
+                ast_expression, {.ast_expression = {.expression = NULL}}});
+            ast_stack_push(&p->scope, expr);
+            ast_stack_push(&p->scope, popped);
+            fold_scope(p);
         }
     }
     break;
@@ -607,8 +620,15 @@ void step_parser(parser_t *p)
             ast_t peeked = ast_stack_peek(&p->scope);
             if (peeked->tag != ast_expression)
             {
-                printf("TODO: Problem: identifier can only be added to expressions. got: ");
-                exit(3);
+                // printf("TODO: Problem: identifier can only be added to expressions. got: ");
+                // print_tag(*peeked);
+                // printf("\n");
+                // exit(3);
+
+                // No problem, let's deal with it
+                ast_t popped = ast_stack_pop(&p->scope);
+                ast_t expr = new_ast((node_t){ast_expression, {.ast_expression = {.expression = popped}}});
+                ast_stack_push(&p->scope, expr);
             }
             ast_t iden = new_ast((node_t){ast_identifier, {.ast_identifier = {.t = peek_token(*p, 0, NULL)}}});
             if (peeked->data.ast_expression.expression == NULL)
@@ -625,24 +645,38 @@ void step_parser(parser_t *p)
         token_t var = peek_token(*p, 1, NULL);
         parser_token_t eq = peek_type(*p, 2, NULL);
 
-        ast_t auto_var = new_ast((node_t){
-            ast_auto, {.ast_auto = {.t = var}}});
-        ast_t expr = new_ast((node_t){ast_expression, {.ast_expression = {NULL}}});
-        ast_stack_push(&p->scope, auto_var);
-        ast_stack_push(&p->scope, expr);
-        p->current++;
-
-        // not an assignment
-        if (eq != op_assign)
+        if (var.type != IDENTIFIER)
         {
-            p->current++;
-            // We'll do the exact same thing but will increment past the identifier
+            printf("Expected LHS\n");
+            exit(10);
         }
-        else if (eq != del_semicol)
+
+        if (eq == op_assign)
         {
-            // syntax error
-            printf("Syntax Error: unassigned / unterminated variable declaration\n");
-            exit(6);
+            // gotta parse expression
+            ast_t auto_var = new_ast((node_t){
+                ast_auto, {.ast_auto = {.t = var}}});
+            ast_stack_push(&p->scope, auto_var);
+            fold_scope(p);
+            ast_t ass = new_ast((node_t){
+                ast_assignement, {.ast_assignement = {.t = var}}});
+            ast_stack_push(&p->scope, ass);
+            ast_t expr = new_ast((node_t){
+                ast_expression, {.ast_expression = {.expression = NULL}}});
+            ast_stack_push(&p->scope, expr);
+            p->current += 3;
+        }
+        else if (eq == del_semicol)
+        {
+            // we're basically done
+            ast_t auto_var = new_ast((node_t){
+                ast_auto, {.ast_auto = {.t = var}}});
+            ast_stack_push(&p->scope, auto_var);
+            fold_scope(p);
+            ast_t expr = new_ast((node_t){
+                ast_expression, {.ast_expression = {.expression = NULL}}});
+            ast_stack_push(&p->scope, expr);
+            p->current += 2;
         }
     }
 

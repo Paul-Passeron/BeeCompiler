@@ -1,5 +1,6 @@
 main()
 {
+    auto a = funcall(a, b, c);
     auto a;
-    a = 7;
+    a = funcall(a, b, c);
 }

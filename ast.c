@@ -153,7 +153,9 @@ void ast_stack_create(ast_stack_t *s)
 }
 void ast_stack_free(ast_stack_t *s)
 {
-    for (int i = 0; i < s->length; i++)
+
+    // TODO: There is a problem around here but I need to rewrite the freeing code anyway
+    for (int i = 0; i < s->length - 1; i++)
         free_ast(s->data[i]);
     FREE(s->data);
     s->capacity = 0;
@@ -332,7 +334,14 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_assignement:
     {
         struct ast_assignement data = a->data.ast_assignement;
-        (void)data;
+        printf("\n");
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("LHS: %s\n", data.t.lexeme);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("RHS:\n");
+        pretty_print_aux(data.rhs, prof + 2);
     }
     break;
     case ast_identifier:
@@ -344,6 +353,7 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_literal:
     {
         struct ast_literal data = a->data.ast_literal;
+        printf("\n");
         for (int i = 0; i < prof + 2; i++)
             printf("   ");
         printf("%s\n", data.t.lexeme);
