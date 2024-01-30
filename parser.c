@@ -354,12 +354,37 @@ int is_empty_expression(ast_t a)
     return 0;
 }
 
+void fold_expressions(parser_t *p)
+{
+    if (p->scope.length > 1)
+    {
+        ast_t pop = ast_stack_pop(&p->scope);
+        ast_t fall = ast_stack_pop(&p->scope);
+        if (fall->tag == ast_expression)
+        {
+            free(fall); // OMG FREE FALL MENTIONNED !!!!
+            ast_stack_push(&p->scope, pop);
+            // fold_expressions(p);
+        }
+        else
+        {
+            ast_stack_push(&p->scope, fall);
+            ast_stack_push(&p->scope, pop);
+        }
+    }
+    else
+        return;
+}
+
 void fold_scope(parser_t *p)
 {
+    fold_expressions(p);
+
     if (p->scope.length == 0)
     {
         return;
     }
+
     ast_t popped = ast_stack_pop(&p->scope);
     // printf("POPPED: ");
     // print_tag(*popped);
@@ -371,11 +396,21 @@ void fold_scope(parser_t *p)
     }
 
     if (is_empty_expression(popped))
-    {
         return;
-    }
 
     ast_t folder = ast_stack_pop(&p->scope);
+    if (popped->tag == ast_expression && folder->tag == ast_expression)
+    {
+        if (folder->data.ast_expression.expression == NULL)
+        {
+            printf("Here\n");
+            free(folder);
+            ast_stack_push(&p->scope, popped);
+            // fold_scope(p);
+            return;
+        }
+    }
+    popped = wrap_in_expr(popped);
 
     // printf("FOLDER: ");
     // print_tag(*folder);
@@ -488,8 +523,10 @@ void fold_scope(parser_t *p)
     break;
     case ast_return:
     {
-        struct ast_return data = folder->data.ast_return;
-        (void)data;
+
+        struct ast_return *data = &folder->data.ast_return;
+        data->expression = popped;
+        ast_stack_push(&p->scope, folder);
     }
     break;
     case ast_funccallargs:
@@ -620,11 +657,6 @@ void step_parser(parser_t *p)
             ast_t peeked = ast_stack_peek(&p->scope);
             if (peeked->tag != ast_expression)
             {
-                // printf("TODO: Problem: identifier can only be added to expressions. got: ");
-                // print_tag(*peeked);
-                // printf("\n");
-                // exit(3);
-
                 // No problem, let's deal with it
                 ast_t popped = ast_stack_pop(&p->scope);
                 ast_t expr = new_ast((node_t){ast_expression, {.ast_expression = {.expression = popped}}});
@@ -671,6 +703,16 @@ void step_parser(parser_t *p)
             ast_expression, {.ast_expression = {.expression = NULL}}});
         ast_stack_push(&p->scope, expr);
         p->current += 2;
+    }
+    else if (curr == key_return)
+    {
+        ast_t ret = new_ast((node_t){
+            ast_return, {.ast_return = {.expression = NULL}}});
+        ast_stack_push(&p->scope, ret);
+        ast_t expr = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, expr);
+        p->current++;
     }
 
     else

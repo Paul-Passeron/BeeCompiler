@@ -157,4 +157,6 @@ void print_tag(node_t t);
 
 void pretty_print(ast_t a);
 
+ast_t wrap_in_expr(ast_t a);
+ast_t new_expr(void);
 #endif // AST_H

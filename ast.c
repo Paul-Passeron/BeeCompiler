@@ -200,6 +200,7 @@ ast_t ast_stack_peek(ast_stack_t *s)
 
 void print_tag(node_t t)
 {
+
     switch (t.tag)
     {
     case ast_bin_op:
@@ -255,6 +256,8 @@ void print_tag(node_t t)
 
 void pretty_print_aux(ast_t a, int prof)
 {
+    if (a == NULL)
+        return;
     for (int i = 0; i < prof; i++)
         printf("   ");
     print_tag(*a);
@@ -386,7 +389,8 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_return:
     {
         struct ast_return data = a->data.ast_return;
-        (void)data;
+        printf("\n");
+        pretty_print_aux(data.expression, prof + 2);
     }
     break;
     case ast_funccallargs:
@@ -417,3 +421,20 @@ void pretty_print_aux(ast_t a, int prof)
 }
 
 void pretty_print(ast_t a) { pretty_print_aux(a, 0); }
+
+ast_t new_expr(void)
+{
+    return new_ast((node_t){
+        ast_expression, {.ast_expression = {.expression = NULL}}});
+}
+
+ast_t wrap_in_expr(ast_t a)
+{
+    if (a->tag != ast_expression && a->tag != ast_scope && a->tag != ast_funccallargs && a->tag != ast_return)
+    {
+        ast_t expr = new_expr();
+        expr->data.ast_expression.expression = a;
+        return expr;
+    }
+    return a;
+}

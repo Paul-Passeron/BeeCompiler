@@ -1,6 +1,6 @@
 main()
 {
-    auto a = funcall(a, b, c);
-    auto a;
-    a = funcall(a, b, c);
+    auto res;
+    res = someValue(arg1, "arg2");
+    return res;
 }
