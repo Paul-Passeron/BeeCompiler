@@ -266,7 +266,15 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_bin_op:
     {
         struct ast_bin_op data = a->data.ast_bin_op;
-        (void)data;
+        printf("%s:\n", data.t.lexeme);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("LHS:\n");
+        pretty_print_aux(data.l, prof + 2);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("RHS:\n");
+        pretty_print_aux(data.r, prof + 2);
     }
     break;
     case ast_if_stat:

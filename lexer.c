@@ -57,7 +57,7 @@ void lexer_free(lexer_t *l)
 int get_end_of_splitter(char *s)
 {
     // List of splitters:
-    // ' ', '\n', '=', '==', '+', '*', '-', '/', '%', '&&', '||', '(', ')', '{', '}', '>', '<', ';', '++', '--'
+    // ' ', '\n', '=', '==', '+', '*', '-', '/', '%', '&&', '||', '(', ')', '{', '}', '>', '<', ';', '++', '--', '@(unary)', '&(unary)'
 
     if (strlen(s) > 1)
     {
@@ -71,9 +71,15 @@ int get_end_of_splitter(char *s)
             return 2;
         if (s[0] == '-' && s[1] == '-')
             return 2;
+        if (s[0] == '!' && s[1] == '=')
+            return 2;
+        if (s[0] == '>' && s[1] == '=')
+            return 2;
+        if (s[0] == '<' && s[1] == '=')
+            return 2;
     }
     char c = *s;
-    if (c == '=' || c == '+' || c == '*' || c == '/' || c == '*' || c == '-' || c == '%' || c == '(' || c == ')' || c == '{' || c == '}' || c == '<' || c == '>' || c == ';' || c == ',' || c == '!')
+    if (c == '=' || c == '+' || c == '*' || c == '/' || c == '*' || c == '-' || c == '%' || c == '(' || c == ')' || c == '{' || c == '}' || c == '<' || c == '>' || c == ';' || c == ',' || c == '!' || c == '&' || c == '@')
         return 1;
     else
         return -1;
@@ -90,6 +96,22 @@ int is_keyword(char *s)
             return 1;
     }
     return 0;
+}
+
+int is_identifier(char *s)
+{
+    char autorised[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+    int l = strlen(s);
+    int l2 = sizeof(autorised);
+    for (int i = 0; i < l; i++)
+    {
+        int cond = 0;
+        for (int j = 0; j < l2; j++)
+            cond |= s[i] == autorised[j];
+        if (!cond)
+            return 0;
+    }
+    return 1;
 }
 
 int get_next_split_offset(char *s)
@@ -119,6 +141,8 @@ token_type_t delim_type(char *buffer)
     case '<':
     case '>':
     case '!':
+    case '&':
+    case '@':
         return OPERATION;
     default:
         return DELIMITER;
@@ -408,8 +432,20 @@ void step_lexer(lexer_t *l)
         if (is_keyword(buffer))
             tok.type = KEYWORD;
         else
-            tok.type = IDENTIFIER;
-
+        {
+            if (is_identifier(tok.lexeme))
+                tok.type = IDENTIFIER;
+            else
+            {
+                // Syntax error
+                error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, UNEXP_CHAR);
+                print_syntax_error(syntax_err);
+                l->flag |= SYNTAX_ERROR;
+                l->remaining++;
+                l->col++;
+                return;
+            }
+        }
         token_array_push(&l->tokens, tok);
         l->col += next_split_offset;
         l->remaining += next_split_offset;

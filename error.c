@@ -23,6 +23,11 @@ void print_syntax_error(error_reporter_t r)
             printf("Unexpected delimeter '\033[1;33m%c\033[00m'.\n", *remaining);
     }
     break;
+    case UNEXP_CHAR:
+    {
+        printf("Unexpected character '\033[1;33m%.10s\033[00m'.\n", remaining);
+    }
+    break;
     case UNCLOSED_STRLIT:
         printf("Unclosed string literal: '\033[1;33m%.10s\033[00m...'\n", remaining);
         break;

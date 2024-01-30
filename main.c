@@ -21,7 +21,6 @@ int main(int argc, char **argv)
     lexer_create(&lexer, argv[1]);
     while (*lexer.remaining)
         step_lexer(&lexer);
-
     parser_t parser;
     parser_create(&parser, lexer);
 

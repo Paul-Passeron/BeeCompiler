@@ -3,6 +3,7 @@
 
 #include "token.h"
 #include "common.h"
+#include "stack.h"
 
 typedef struct node_t node_t;
 
@@ -26,6 +27,7 @@ struct node_t
         ast_funccallargs,
         ast_scope,
         ast_auto,
+        // ast_tmp_expr,
     } tag;
     union
     {
@@ -128,6 +130,15 @@ struct node_t
         {
             token_t t;
         } ast_auto;
+
+        // struct ast_tmp_expr
+        // {
+        //     stack_t precedence;
+        //     node_t **expressions;
+        //     int length;
+        //     int capacity;
+        //     int min_precedence;
+        // } ast_tmp_expr;
 
     } data;
 };

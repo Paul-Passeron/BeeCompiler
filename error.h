@@ -9,6 +9,7 @@ typedef enum
 typedef enum
 {
     UNEXP_DELIM,
+    UNEXP_CHAR,
     UNCLOSED_STRLIT,
     INVALID_STRLIT,
     UNCLOSED_CHRLIT,

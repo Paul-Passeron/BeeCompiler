@@ -48,7 +48,13 @@ typedef enum
     op_or,
     op_grtr,
     op_lssr,
-
+    op_lssr_eq,
+    op_grtr_eq,
+    op_diff,
+    op_deref,
+    op_address,
+    op_incr,
+    op_decr,
     // delimeters
     del_openbra,
     del_closebra,
@@ -63,7 +69,7 @@ typedef enum
     tok_numlit,
     tok_charlit,
 
-    err_tok
+    err_tok,
 
 } parser_token_t;
 
@@ -71,5 +77,8 @@ void parser_tok_name(parser_token_t t);
 
 ast_t prog_to_ast(parser_t *p);
 void build_ast(parser_t *p);
-
+void parse_primary(parser_t *p);
+void step_parser(parser_t *p);
+void parse_expression_1(parser_t *p, int min_expression);
+void parse_expression(parser_t *p);
 #endif // PARSER_H

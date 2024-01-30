@@ -96,6 +96,117 @@ void parser_tok_name(parser_token_t t)
     }
 }
 
+int get_precedence(parser_token_t t)
+{
+    switch (t)
+    {
+    case op_assign:
+        return 14;
+    case op_eq:
+        return 7;
+    case op_diff:
+        return 7;
+    case op_plus:
+        return 2;
+    case op_minus:
+        return 2;
+    case op_mult:
+        return 3;
+    case op_div:
+        return 3;
+    case op_mod:
+        return 3;
+    case op_not:
+        return 2;
+    case op_and:
+        return 11;
+    case op_or:
+        return 12;
+    case op_grtr:
+        return 6;
+    case op_lssr:
+        return 6;
+    case op_grtr_eq:
+        return 6;
+    case op_lssr_eq:
+        return 6;
+    case op_deref:
+        return 2;
+    case op_incr:
+        return 1;
+    case op_decr:
+        return 1;
+    case op_address:
+        return 2;
+        // case del_openparen:
+        //     return 1;
+        // case del_closeparen:
+        //     return 1;
+    default:
+        break;
+    }
+    return -1;
+}
+
+int get_assoc(parser_token_t t)
+{
+    // 0: ltor
+    // 1: rtol
+    switch (t)
+    {
+    case op_assign:
+        return 1;
+    case op_eq:
+        return 0;
+    case op_diff:
+        return 0;
+    case op_plus:
+        return 0;
+    case op_minus:
+        return 0;
+    case op_mult:
+        return 0;
+    case op_div:
+        return 0;
+    case op_mod:
+        return 0;
+    case op_not:
+        return 1;
+    case op_and:
+        return 0;
+    case op_or:
+        return 0;
+    case op_grtr:
+        return 0;
+    case op_lssr:
+        return 0;
+    case op_grtr_eq:
+        return 0;
+    case op_lssr_eq:
+        return 0;
+    case op_deref:
+        return 1;
+    case op_incr:
+        return 0;
+    case op_decr:
+        return 0;
+    case op_address:
+        return 1;
+        // case del_openparen:
+        //     return 1;
+        // case del_closeparen:
+        //     return 1;
+    default:
+        break;
+    }
+    return -1;
+}
+
+int is_right_asso(parser_token_t t)
+{
+    return get_assoc(t) == 1;
+}
+
 void parser_create(parser_t *p, lexer_t l)
 {
 
@@ -209,6 +320,10 @@ parser_token_t get_type(token_t t)
                 return op_grtr;
             case '<':
                 return op_lssr;
+            case '&':
+                return op_address;
+            case '@':
+                return op_deref;
             default:
                 return err_tok;
             }
@@ -222,6 +337,12 @@ parser_token_t get_type(token_t t)
                 return op_and;
             if (strcmp(t.lexeme, "||") == 0)
                 return op_or;
+            if (strcmp(t.lexeme, "!=") == 0)
+                return op_diff;
+            if (strcmp(t.lexeme, ">=") == 0)
+                return op_grtr_eq;
+            if (strcmp(t.lexeme, "<=") == 0)
+                return op_lssr_eq;
             return err_tok;
         }
         break;
@@ -286,7 +407,7 @@ token_array_t parse_functiondef_args(parser_t p, int begin, int l)
             {
                 // raise syntax error here
                 // function def with invalid separator between argument (not a comma)
-                error_reporter_t err = create_error_p(p, SYNTAX_ERROR, INVALID_FUNCALL);
+                error_reporter_t err = create_error_p(p, SYNTAX_ERROR, INVALID_FUNDEF);
                 print_syntax_error(err);
                 exit(3);
             }
@@ -419,6 +540,7 @@ void fold_scope(parser_t *p)
     {
     case ast_bin_op:
     {
+        printf("Here\n");
         struct ast_bin_op *data = &folder->data.ast_bin_op;
         if (data->l == NULL)
         {
@@ -427,7 +549,7 @@ void fold_scope(parser_t *p)
             exit(4);
         }
         // put it in the rhs
-        data->l = popped;
+        data->r = popped;
         ast_stack_push(&p->scope, folder);
     }
     break;
@@ -552,6 +674,47 @@ void fold_scope(parser_t *p)
     break;
     }
 }
+
+int is_bin_op(parser_token_t t)
+{
+    return op_eq <= t && t <= op_diff;
+}
+
+void parse_expression(parser_t *p)
+{
+    step_parser(p);
+    return parse_expression_1(p, 0);
+}
+
+void parse_expression_1(parser_t *p, int min_expression)
+{
+    token_t op;
+    token_t lookahead = peek_token(*p, 1, NULL);
+    parser_token_t t = get_type(lookahead);
+    ast_t lhs = ast_stack_pop(&p->scope);
+    while (is_bin_op(t) && get_precedence(t) > min_expression)
+    {
+        op = lookahead;
+        p->current++;
+        step_parser(p);
+        ast_t rhs = ast_stack_pop(&p->scope);
+        lookahead = peek_token(*p, 1, NULL);
+        parser_token_t t = get_type(lookahead);
+        while ((is_bin_op(t) && get_precedence(t) > get_precedence(get_type(op))) || (is_right_asso(t) && get_precedence(t) == get_precedence(get_type(op))))
+        {
+            ast_stack_push(&p->scope, rhs);
+            parse_expression_1(p, get_precedence(t) > get_precedence(get_type(op)) ? get_precedence(get_type(op)) + 1 : 0);
+            rhs = ast_stack_pop(&p->scope);
+            p->current++;
+            lookahead = peek_token(*p, 1, NULL);
+            t = get_type(lookahead);
+        }
+        lhs = new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = op}}});
+        ast_stack_push(&p->scope, lhs);
+    }
+}
+
 void step_parser(parser_t *p)
 {
 
@@ -619,7 +782,8 @@ void step_parser(parser_t *p)
                 ast_stack_push(&p->scope, popped);
             }
         }
-        p->current++;
+        // p->current++;
+        parse_expression(p);
     }
 
     else if (curr == tok_iden)
@@ -670,6 +834,7 @@ void step_parser(parser_t *p)
                 return;
             }
             p->current++;
+            // parse_expression(p);
         }
     }
     else if (curr == key_auto)
@@ -713,6 +878,22 @@ void step_parser(parser_t *p)
             ast_expression, {.ast_expression = {.expression = NULL}}});
         ast_stack_push(&p->scope, expr);
         p->current++;
+    }
+    else if (is_bin_op(curr))
+    {
+        // ast_t lhs = ast_stack_pop(&p->scope);
+
+        // ast_t plus = new_ast((node_t){
+        //     ast_bin_op, {.ast_bin_op = {.l = lhs, .r = NULL, .t = peek_token(*p, 0, NULL)}}});
+        // ast_stack_push(&p->scope, plus);
+        // ast_t expr = new_ast((node_t){ast_expression, {.ast_expression = {.expression = NULL}}});
+        // ast_stack_push(&p->scope, expr);
+        // p->current++;
+
+        // should not happen !!!
+
+        printf("Unreachable (bin op) op\n");
+        exit(7);
     }
 
     else

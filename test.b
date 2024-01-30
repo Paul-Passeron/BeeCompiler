@@ -1,6 +1,4 @@
-main()
+add(a, b, c)
 {
-    auto res;
-    res = someValue(arg1, "arg2");
-    return res;
+    1 + 2 + 3;
 }
