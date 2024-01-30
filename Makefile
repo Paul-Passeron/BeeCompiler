@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -g
 
-all:clean main
+all:clean main lines
 
 stack.o: stack.h
 main.o: stack.h
@@ -18,3 +18,9 @@ main: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o
 clean:
 	rm -rf *.o
 	rm -f main
+
+lines:
+	wc -l $$( find -name '*.[hcb]') | tail -n 1
+
+run:
+	./main test.b

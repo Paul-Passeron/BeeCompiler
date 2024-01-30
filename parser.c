@@ -394,6 +394,7 @@ token_array_t parse_functiondef_args(parser_t p, int begin, int l)
         token_t tok = peek_token(p, begin + i, NULL);
         if (!flip_flop && tok.type != IDENTIFIER)
         {
+
             error_reporter_t err = create_error_p(p, SYNTAX_ERROR, INVALID_FUNDEF);
             print_syntax_error(err);
             exit(3);
@@ -405,6 +406,7 @@ token_array_t parse_functiondef_args(parser_t p, int begin, int l)
             parser_token_t type = get_type(tok);
             if (type != del_comma)
             {
+                printf("Type: %d\n", type);
                 // raise syntax error here
                 // function def with invalid separator between argument (not a comma)
                 error_reporter_t err = create_error_p(p, SYNTAX_ERROR, INVALID_FUNDEF);
@@ -679,29 +681,118 @@ int is_bin_op(parser_token_t t)
 {
     return op_eq <= t && t <= op_diff;
 }
+int is_function_def(parser_t p)
+{
+    if (peek_type(p, 0, NULL) != tok_iden)
+    {
+        return 0;
+    }
+    if (peek_type(p, 1, NULL) != del_openparen)
+        return 0;
+    int k = 2;
+    int scope = 1;
+    while (p.current + k < p.tokens.length && scope > 0)
+    {
+        parser_token_t curr = peek_type(p, k, NULL);
+        k++;
+        if (curr == del_openbra || curr == del_openparen)
+            scope++;
+        else if (curr == del_closebra || curr == del_closeparen)
+            scope--;
+    }
+    if (peek_type(p, k, NULL) == del_openbra)
+        return 1;
+    return 0;
+}
 
+int is_function_call(parser_t p)
+{
+    if (peek_type(p, 0, NULL) != tok_iden)
+        return 0;
+    if (peek_type(p, 1, NULL) != del_openbra)
+        return 0;
+    return !is_function_def(p);
+}
+
+void parse_primary(parser_t *p)
+{
+    printf("Parse Primary\n");
+
+    // parse single identifiers and function calls (no function defs)
+    // parse literals
+    // that's all ...?
+
+    token_t tok = peek_token(*p, 0, NULL);
+    parser_token_t t = get_type(tok);
+    if (t == tok_iden)
+    {
+        if (is_function_call(*p))
+        {
+            // OMG a function call ???
+            parse_functioncall_headonly(p);
+            // no arguments
+            // if (peek_type(*p, 1, NULL) == del_closeparen)
+            // {
+            //     // Should take care of funccallargs
+            //     fold_scope(p);
+            // }
+            // else
+            //     while (peek_type(*p, 0, NULL) != del_closeparen)
+            //     {
+            //         parse_expression(p);
+            //         fold_scope(p);
+            //         if (peek_type(*p, 0, NULL) != del_closeparen && peek_type(*p, 0, NULL) != del_comma)
+            //         {
+            //             printf("Funcall error !!!\n");
+            //             exit(11);
+            //         }
+            //         p->current++;
+            //     }
+        }
+    }
+    else if (t == tok_charlit || t == tok_strlit || t == tok_numlit)
+    {
+        // Litteral
+        if (p->scope.length > 0)
+        {
+            ast_t peeked = ast_stack_peek(&p->scope);
+            if (is_empty_expression(peeked))
+            {
+                ast_t lit = new_ast((node_t){ast_literal, {.ast_literal = {.t = peek_token(*p, 0, NULL)}}});
+                ast_t popped = ast_stack_pop(&p->scope);
+                popped->data.ast_expression.expression = lit;
+                ast_stack_push(&p->scope, popped);
+            }
+        }
+    }
+    p->current++;
+}
 void parse_expression(parser_t *p)
 {
-    step_parser(p);
+    printf("Parse Expression\n");
+    parse_primary(p);
     return parse_expression_1(p, 0);
 }
 
 void parse_expression_1(parser_t *p, int min_expression)
 {
+    printf("Parse Expression 1\n");
     token_t op;
     token_t lookahead = peek_token(*p, 1, NULL);
     parser_token_t t = get_type(lookahead);
+
     ast_t lhs = ast_stack_pop(&p->scope);
     while (is_bin_op(t) && get_precedence(t) > min_expression)
     {
         op = lookahead;
         p->current++;
-        step_parser(p);
+        parse_primary(p);
         ast_t rhs = ast_stack_pop(&p->scope);
         lookahead = peek_token(*p, 1, NULL);
         parser_token_t t = get_type(lookahead);
         while ((is_bin_op(t) && get_precedence(t) > get_precedence(get_type(op))) || (is_right_asso(t) && get_precedence(t) == get_precedence(get_type(op))))
         {
+            printf("Hereaaa\n");
             ast_stack_push(&p->scope, rhs);
             parse_expression_1(p, get_precedence(t) > get_precedence(get_type(op)) ? get_precedence(get_type(op)) + 1 : 0);
             rhs = ast_stack_pop(&p->scope);
@@ -716,6 +807,118 @@ void parse_expression_1(parser_t *p, int min_expression)
 }
 
 void step_parser(parser_t *p)
+{
+    // What it handles :
+    //  - function calls (done) SHOULD NOT DO THAT ACTUALLY THOUGH ???
+    //  - function defs  (done)
+    //  - if statements
+    //  - for and while loops
+    // delegates the treatment of expressions (can ask to parse an expression starting at current token)
+    printf("Step_Parser\n");
+    parser_token_t curr = peek_type(*p, 0, NULL);
+
+    switch (curr)
+    {
+    case tok_iden:
+    {
+        // is it a function def ?
+        if (is_function_def(*p))
+        {
+            printf("Here\n");
+            fflush(stdout);
+            int k = 2;
+            int scope = 1;
+            while (p->current + k < p->tokens.length && scope > 0)
+            {
+                parser_token_t curr = peek_type(*p, k, NULL);
+                k++;
+                if (curr == del_openbra || curr == del_openparen)
+                    scope++;
+                else if (curr == del_closebra || curr == del_closeparen)
+                    scope--;
+            }
+            parse_functiondef_no_body(p, k - 1);
+            ast_stack_push(&p->scope, new_expr());
+        }
+        // is it a function call ?
+        // else if (is_function_call(*p))
+        //    // parse_functioncall_headonly(p);
+
+        // // ->simply a variable
+        else
+        {
+            // Would that work with function calls tooo ????
+
+            // just parse expression ?
+            printf("FunCall\n");
+            parse_expression(p);
+            // fold_scope(p);
+        }
+    }
+    break;
+    case del_closebra:
+    {
+        fold_scope(p);
+        p->current++;
+    }
+    break;
+    case del_closeparen:
+    {
+        fold_scope(p);
+        p->current++;
+    }
+    break;
+    case del_openbra:
+    {
+        ast_t s = new_ast((node_t){
+            ast_scope, {.ast_scope = {.statements = malloc(sizeof(ast_t) * 256), .capacity = 256, .length = 0}}});
+        ast_stack_push(&p->scope, s);
+        ast_t expr = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, expr);
+        p->current++;
+    }
+    break;
+    case del_openparen:
+    {
+        ast_t expr = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, expr);
+        p->current++;
+    }
+    break;
+    case del_comma:
+    {
+        fold_scope(p);
+        ast_t arg = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, arg);
+        p->current++;
+    }
+    break;
+    case del_semicol:
+    {
+        if (p->scope.length > 1)
+            while (p->scope.length > 0 && ast_stack_peek(&p->scope)->tag != ast_scope)
+                fold_scope(p);
+        ast_t arg = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, arg);
+        p->current++;
+    }
+    break;
+    case tok_charlit:
+    case tok_numlit:
+    case tok_strlit:
+        parse_expression(p);
+
+        break;
+    default:
+        p->current++;
+        break;
+    }
+}
+void step_parser_old(parser_t *p)
 {
 
     parser_token_t curr = peek_type(*p, 0, NULL);
