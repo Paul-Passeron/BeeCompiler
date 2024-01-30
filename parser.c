@@ -650,34 +650,27 @@ void step_parser(parser_t *p)
             printf("Expected LHS\n");
             exit(10);
         }
-
+        ast_t auto_var = new_ast((node_t){
+            ast_auto, {.ast_auto = {.t = var}}});
+        ast_stack_push(&p->scope, auto_var);
+        fold_scope(p);
         if (eq == op_assign)
         {
             // gotta parse expression
-            ast_t auto_var = new_ast((node_t){
-                ast_auto, {.ast_auto = {.t = var}}});
-            ast_stack_push(&p->scope, auto_var);
-            fold_scope(p);
             ast_t ass = new_ast((node_t){
                 ast_assignement, {.ast_assignement = {.t = var}}});
             ast_stack_push(&p->scope, ass);
-            ast_t expr = new_ast((node_t){
-                ast_expression, {.ast_expression = {.expression = NULL}}});
-            ast_stack_push(&p->scope, expr);
-            p->current += 3;
+
+            p->current++;
         }
         else if (eq == del_semicol)
         {
             // we're basically done
-            ast_t auto_var = new_ast((node_t){
-                ast_auto, {.ast_auto = {.t = var}}});
-            ast_stack_push(&p->scope, auto_var);
-            fold_scope(p);
-            ast_t expr = new_ast((node_t){
-                ast_expression, {.ast_expression = {.expression = NULL}}});
-            ast_stack_push(&p->scope, expr);
-            p->current += 2;
         }
+        ast_t expr = new_ast((node_t){
+            ast_expression, {.ast_expression = {.expression = NULL}}});
+        ast_stack_push(&p->scope, expr);
+        p->current += 2;
     }
 
     else
