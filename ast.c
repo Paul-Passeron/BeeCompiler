@@ -60,7 +60,7 @@ void free_ast(ast_t a)
     case ast_function_def:
     {
         struct ast_function_def data = a->data.ast_function_def;
-        token_array_free(&data.args);
+        // token_array_free(&data.args);
         free_ast(data.body);
     }
     break;
@@ -304,14 +304,14 @@ void pretty_print_aux(ast_t a, int prof)
             printf("   ");
         printf("[name]: ");
         printf("%s\n", data.t.lexeme);
-        if (data.args.length > 0)
+        if (data.arity > 0)
         {
             for (int i = 0; i < prof + 1; i++)
                 printf("   ");
             printf("[args]: ");
-            for (int i = 0; i < data.args.length; i++)
+            for (int i = 0; i < data.arity; i++)
             {
-                printf("'%s' ", data.args.data[i].lexeme);
+                // printf("'%s' ", data.args[i].lexeme);
             }
             printf("\n");
         }

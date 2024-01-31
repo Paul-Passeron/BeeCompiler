@@ -62,7 +62,9 @@ struct node_t
         struct ast_function_def
         {
             token_t t;
-            token_array_t args;
+            node_t **args;
+            int arity;
+            int capacity;
             node_t *body;
         } ast_function_def;
 

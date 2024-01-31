@@ -242,9 +242,7 @@ ast_t parse_argument_list(parser_t *p)
     ast_stack_create(&s);
     ast_stack_push(&s, parse_expression(p));
     while (peek_next_type(*p) == del_comma)
-    {
         ast_stack_push(&s, parse_expression(p));
-    }
 
     return new_ast((node_t){
         ast_funccallargs, {.ast_funccallargs = {.args = s.data, .capacity = s.capacity, .length = s.length}}});
@@ -290,18 +288,60 @@ ast_t parse_compound_statement(parser_t *p)
     expect(del_openbra, peek_next_type(*p));
     p->current++;
     // parsing the statement list until we encounter the associated closing bracket
-    while (peek_next_type != del_closebra)
+    while (peek_next_type(*p) != del_closebra)
         ast_stack_push(&scope, parse_statement(p));
     return new_ast((node_t){ast_scope, {.ast_scope = {.capacity = scope.capacity, .length = scope.length, .statements = scope.data}}});
 }
 
-ast_t parse_fundef_arg_list(parser_t *p)
+ast_t parse_identifier(parser_t *p)
+{
+    // No need for production rule, identifiers are as defined by the lexer (see lexer.c)
+    // We expect an identifier
+    expect(tok_iden, peek_next_type(*p));
+    token_t identifier = peek_next_token(*p);
+    p->current++;
+    return new_ast((node_t){
+        ast_identifier, {.ast_identifier = {.t = identifier}}});
+}
+
+ast_stack_t parse_fundef_arg_list(parser_t *p)
 {
     // production rule:
+    // <fundef arg list > ::= <identifier> | <identifier>, <fundef arg list>
+    // we expect an identifier
+    ast_stack_t args;
+    ast_stack_create(&args);
+
+    expect(tok_iden, peek_next_type(*p));
+    ast_stack_push(&args, parse_identifier(p));
+    while (peek_next_type(*p) == del_comma)
+        ast_stack_push(&args, parse_identifier(p));
+    return args;
 }
 
 ast_t parse_function_def(parser_t *p)
 {
     // production rule:
     // <function def> ::= <identifier>()<compound statement> | <identifier>(<fundef arg list>)<compound statement>
+    // expect an identifier
+    expect(tok_iden, peek_next_type(*p));
+    token_t function = peek_next_token(*p);
+    p->current++;
+    // We expect an open parenthesis
+    expect(del_openparen, peek_next_type(*p));
+    p->current++;
+
+    ast_stack_t args = {0};
+
+    if (peek_next_type(*p) == del_closeparen)
+    {
+        // no argument in function def
+        args = parse_fundef_arg_list(p);
+    }
+    // expect a closing parenthesis
+    expect(del_closeparen, peek_next_type(*p));
+    p->current++;
+    ast_t body = parse_compound_statement(p);
+    return new_ast((node_t){
+        ast_function_def, {.ast_function_def = {.args = args.data, .arity = args.length, .capacity = args.capacity, .t = function, .body = body}}});
 }
