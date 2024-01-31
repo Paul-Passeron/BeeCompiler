@@ -17,7 +17,7 @@ struct node_t
         ast_while_loop,
         ast_function_def,
         ast_function_call,
-        ast_assignement,
+        ast_assignment,
         ast_identifier,
         ast_literal,
         ast_unary_op,
@@ -74,11 +74,11 @@ struct node_t
             int capacity;
         } ast_function_call;
 
-        struct ast_assignement
+        struct ast_assignment
         {
             token_t t; // lhs
             node_t *rhs;
-        } ast_assignement;
+        } ast_assignment;
 
         struct ast_identifier
         {

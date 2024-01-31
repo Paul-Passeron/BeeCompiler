@@ -1,5 +1,6 @@
 #ifndef PARSER_TOK_H
 #define PARSER_TOK_H
+#include "token.h"
 typedef enum
 {
     // keywords

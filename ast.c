@@ -45,8 +45,9 @@ void free_ast(ast_t a)
     {
         struct ast_for_loop data = a->data.ast_for_loop;
         free_ast(data.init);
-        free_ast(data.cond);
+        free_ast(data.condition);
         free_ast(data.body);
+        free_ast(data.iterator);
     }
     break;
     case ast_while_loop:
@@ -70,9 +71,9 @@ void free_ast(ast_t a)
             free_ast(data.args[i]);
     }
     break;
-    case ast_assignement:
+    case ast_assignment:
     {
-        struct ast_assignement data = a->data.ast_assignement;
+        struct ast_assignment data = a->data.ast_assignment;
         free_ast(data.rhs);
     }
     break;
@@ -221,8 +222,8 @@ void print_tag(node_t t)
     case ast_function_call:
         printf("ast_function_call");
         break;
-    case ast_assignement:
-        printf("ast_assignement");
+    case ast_assignment:
+        printf("ast_assignment");
         break;
     case ast_identifier:
         printf("ast_identifier");
@@ -342,9 +343,9 @@ void pretty_print_aux(ast_t a, int prof)
         }
     }
     break;
-    case ast_assignement:
+    case ast_assignment:
     {
-        struct ast_assignement data = a->data.ast_assignement;
+        struct ast_assignment data = a->data.ast_assignment;
         printf("\n");
         for (int i = 0; i < prof + 1; i++)
             printf("   ");
