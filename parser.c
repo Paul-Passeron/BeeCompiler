@@ -204,7 +204,7 @@ int get_assoc(parser_token_t t)
 
 int is_right_asso(parser_token_t t)
 {
-    return get_assoc(t) == 1;
+    return get_assoc(t) == 0;
 }
 
 void parser_create(parser_t *p, lexer_t l)
@@ -657,6 +657,7 @@ void fold_scope(parser_t *p)
     {
         struct ast_funccallargs *data = &folder->data.ast_funccallargs;
         data->args[data->length++] = popped;
+        printf("Lexeme: %s\n", popped->data.ast_expression.expression->data.ast_identifier.t.lexeme);
         ast_stack_push(&p->scope, folder);
     }
     break;
@@ -709,12 +710,12 @@ int is_function_call(parser_t p)
 {
     if (peek_type(p, 0, NULL) != tok_iden)
         return 0;
-    if (peek_type(p, 1, NULL) != del_openbra)
+    if (peek_type(p, 1, NULL) != del_openparen)
         return 0;
     return !is_function_def(p);
 }
 
-void parse_primary(parser_t *p)
+ast_t parse_primary(parser_t *p)
 {
     printf("Parse Primary\n");
 
@@ -729,25 +730,37 @@ void parse_primary(parser_t *p)
         if (is_function_call(*p))
         {
             // OMG a function call ???
+            printf("That's a function call, well done !\n");
             parse_functioncall_headonly(p);
-            // no arguments
-            // if (peek_type(*p, 1, NULL) == del_closeparen)
-            // {
-            //     // Should take care of funccallargs
-            //     fold_scope(p);
-            // }
-            // else
-            //     while (peek_type(*p, 0, NULL) != del_closeparen)
-            //     {
-            //         parse_expression(p);
-            //         fold_scope(p);
-            //         if (peek_type(*p, 0, NULL) != del_closeparen && peek_type(*p, 0, NULL) != del_comma)
-            //         {
-            //             printf("Funcall error !!!\n");
-            //             exit(11);
-            //         }
-            //         p->current++;
-            //     }
+            int l = p->scope.length - 2;
+            while (p->scope.length != l)
+            {
+                // ast_stack_push(&p->scope, new_expr());
+
+                ast_t arg = parse_expression(p);
+                ast_stack_push(&p->scope, arg);
+                parser_token_t t = peek_type(*p, 0, NULL);
+
+                if (!(t == tok_iden || t == tok_charlit || t == tok_numlit || t == tok_strlit))
+                {
+                    // ast_stack_push(&p->scope, new_expr());
+                    // p->current++;
+                    step_parser(p);
+                    // return;
+                    // fold_scope(p);
+                }
+            }
+
+            return ast_stack_pop(&p->scope);
+        }
+        else
+        {
+            ast_t ide = new_ast((node_t){ast_identifier, {.ast_identifier = {.t = peek_token(*p, 0, NULL)}}});
+            ast_t popped = ast_stack_pop(&p->scope);
+            popped->data.ast_expression.expression = ide;
+            p->current++;
+
+            return popped;
         }
     }
     else if (t == tok_charlit || t == tok_strlit || t == tok_numlit)
@@ -761,62 +774,71 @@ void parse_primary(parser_t *p)
                 ast_t lit = new_ast((node_t){ast_literal, {.ast_literal = {.t = peek_token(*p, 0, NULL)}}});
                 ast_t popped = ast_stack_pop(&p->scope);
                 popped->data.ast_expression.expression = lit;
-                ast_stack_push(&p->scope, popped);
+                p->current++;
+                return popped;
             }
         }
     }
     p->current++;
+    return new_expr();
 }
-void parse_expression(parser_t *p)
+ast_t parse_expression(parser_t *p)
 {
     printf("Parse Expression\n");
-    parse_primary(p);
-    return parse_expression_1(p, 0);
+    // ast_stack_push(&p->scope, new_expr());
+    // ast_stack_push(&p->scope, new_expr());
+    ast_t prim = parse_primary(p);
+    return parse_expression_1(prim, p, 0);
 }
 
-void parse_expression_1(parser_t *p, int min_expression)
+ast_t parse_expression_1(ast_t lhs, parser_t *p, int min_expression)
 {
     printf("Parse Expression 1\n");
-    token_t op;
-    token_t lookahead = peek_token(*p, 1, NULL);
+    token_t lookahead = peek_token(*p, 0, NULL);
     parser_token_t t = get_type(lookahead);
-
-    ast_t lhs = ast_stack_pop(&p->scope);
+    printf("T is : %d\n", t);
+    fflush(stdout);
+    // ast_t lhs = ast_stack_pop(&p->scope);
     while (is_bin_op(t) && get_precedence(t) > min_expression)
     {
-        op = lookahead;
-        p->current++;
-        parse_primary(p);
-        ast_t rhs = ast_stack_pop(&p->scope);
-        lookahead = peek_token(*p, 1, NULL);
-        parser_token_t t = get_type(lookahead);
+
+        token_t op = lookahead;
+        ast_t rhs = parse_primary(p);
+        // p->current++;
+
+        lookahead = peek_token(*p, 0, NULL);
+        t = get_type(lookahead);
+
         while ((is_bin_op(t) && get_precedence(t) > get_precedence(get_type(op))) || (is_right_asso(t) && get_precedence(t) == get_precedence(get_type(op))))
         {
             printf("Hereaaa\n");
-            ast_stack_push(&p->scope, rhs);
-            parse_expression_1(p, get_precedence(t) > get_precedence(get_type(op)) ? get_precedence(get_type(op)) + 1 : 0);
-            rhs = ast_stack_pop(&p->scope);
+
+            rhs = parse_expression_1(rhs, p, get_precedence(get_type(op)) + (get_precedence(t) > get_precedence(get_type(op)) ? 1 : 0));
             p->current++;
             lookahead = peek_token(*p, 1, NULL);
             t = get_type(lookahead);
         }
         lhs = new_ast((node_t){
             ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = op}}});
-        ast_stack_push(&p->scope, lhs);
     }
+    // ast_stack_push(&p->scope, lhs);
+    return lhs;
 }
 
 void step_parser(parser_t *p)
 {
     // What it handles :
-    //  - function calls (done) SHOULD NOT DO THAT ACTUALLY THOUGH ???
+
     //  - function defs  (done)
     //  - if statements
     //  - for and while loops
     // delegates the treatment of expressions (can ask to parse an expression starting at current token)
-    printf("Step_Parser\n");
+    printf("Step_Parser: %d\n", p->current);
     parser_token_t curr = peek_type(*p, 0, NULL);
-
+    if (p->scope.length < 1)
+        ast_stack_push(&p->scope, new_expr());
+    else if (ast_stack_peek(&p->scope)->tag != ast_expression)
+        ast_stack_push(&p->scope, new_expr());
     switch (curr)
     {
     case tok_iden:
@@ -848,10 +870,11 @@ void step_parser(parser_t *p)
         else
         {
             // Would that work with function calls tooo ????
-
-            // just parse expression ?
-            printf("FunCall\n");
-            parse_expression(p);
+            if (is_function_call(*p))
+                printf("FunCall\n");
+            else
+                printf("Variable\n");
+            ast_stack_push(&p->scope, parse_expression(p));
             // fold_scope(p);
         }
     }
@@ -910,7 +933,7 @@ void step_parser(parser_t *p)
     case tok_charlit:
     case tok_numlit:
     case tok_strlit:
-        parse_expression(p);
+        ast_stack_push(&p->scope, parse_expression(p));
 
         break;
     default:

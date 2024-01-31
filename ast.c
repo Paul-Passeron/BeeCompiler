@@ -438,6 +438,10 @@ ast_t new_expr(void)
 
 ast_t wrap_in_expr(ast_t a)
 {
+    if (a->tag == ast_identifier)
+    {
+        printf("LEXEME OF ID IS : %s\n", a->data.ast_identifier.t.lexeme);
+    }
     if (a->tag != ast_expression && a->tag != ast_scope && a->tag != ast_funccallargs && a->tag != ast_return)
     {
         ast_t expr = new_expr();

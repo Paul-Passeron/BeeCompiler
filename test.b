@@ -1,4 +1,4 @@
-main()
+main(a, b, c)
 {
-    print;
+    funcall(a, b, c);
 }

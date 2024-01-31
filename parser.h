@@ -77,8 +77,8 @@ void parser_tok_name(parser_token_t t);
 
 ast_t prog_to_ast(parser_t *p);
 void build_ast(parser_t *p);
-void parse_primary(parser_t *p);
 void step_parser(parser_t *p);
-void parse_expression_1(parser_t *p, int min_expression);
-void parse_expression(parser_t *p);
+ast_t parse_primary(parser_t *p);
+ast_t parse_expression_1(ast_t lhs, parser_t *p, int min_expression);
+ast_t parse_expression(parser_t *p);
 #endif // PARSER_H

@@ -100,9 +100,10 @@ int is_keyword(char *s)
 
 int is_identifier(char *s)
 {
-    char autorised[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+    char autorised[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
     int l = strlen(s);
     int l2 = sizeof(autorised);
+
     for (int i = 0; i < l; i++)
     {
         int cond = 0;
