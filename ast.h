@@ -48,7 +48,8 @@ struct node_t
         struct ast_for_loop
         {
             node_t *init;
-            node_t *cond;
+            node_t *condition;
+            node_t *iterator;
             node_t *body;
         } ast_for_loop;
 
@@ -142,7 +143,6 @@ struct node_t
 
     } data;
 };
-
 typedef node_t *ast_t;
 
 ast_t new_ast(node_t node);

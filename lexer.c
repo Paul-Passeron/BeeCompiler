@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "parser_tok.h"
 
 extern int errno;
 
@@ -52,6 +53,18 @@ void lexer_free(lexer_t *l)
     token_array_free(&(l->tokens));
     FREE(l->start);
     FREE(l->filename);
+}
+
+token_t new_openpar(void)
+{
+    token_t res;
+    res.abs_offset = -1;
+    res.col = -1;
+    res.line = -1;
+    res.lexeme = malloc(1);
+    *(res.lexeme) = '(';
+    res.type = DELIMITER;
+    return res;
 }
 
 int get_end_of_splitter(char *s)

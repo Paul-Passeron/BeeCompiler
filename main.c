@@ -21,7 +21,8 @@ int main(int argc, char **argv)
     lexer_create(&lexer, argv[1]);
     while (*lexer.remaining)
         step_lexer(&lexer);
-    // print_token_array(lexer);
+    print_token_array(lexer);
+    printf("Length: %d\n", lexer.tokens.length);
     parser_t parser;
     parser_create(&parser, lexer);
 

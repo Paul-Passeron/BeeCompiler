@@ -75,16 +75,10 @@ typedef enum
 
 void parser_tok_name(parser_token_t t);
 
-ast_t parse_expression(parser_t *p);
-ast_t parse_binary_expression(parser_t *p);
-ast_t parse_function_call(parser_t *p);
-ast_t parse_function_def_signature(parser_t *p);
-ast_t parse_var_declaration(parser_t *p);
-ast_t parse_var_assignement(parser_t *p);
-
-ast_t parse_for_loop(parser_t *p);
-ast_t parse_while_loop(parser_t *p);
-ast_t build_ast(parser_t *p);
 ast_t prog_to_ast(parser_t *p);
-
+void build_ast(parser_t *p);
+void step_parser(parser_t *p);
+ast_t parse_primary(parser_t *p);
+ast_t parse_expression_1(ast_t lhs, parser_t *p, int min_expression);
+ast_t parse_expression(parser_t *p);
 #endif // PARSER_H

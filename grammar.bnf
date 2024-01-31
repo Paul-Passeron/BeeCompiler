@@ -1,0 +1,13 @@
+(* Bee Language Grammar *)
+
+program ::= <stmt_list>
+
+stmt_list ::= <stmt>
+            | <stmt> ; <stmt_list>
+
+var = <identifier>
+
+stmt ::= <var> = <expression>
+        | <expression>
+
+expression = <>
