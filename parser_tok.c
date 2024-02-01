@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "parser_tok.h"
-
+#include <string.h>
 void parser_tok_name(parser_token_t t)
 {
     switch (t)

@@ -1,4 +1,7 @@
-main(a, b, c)
+main(argc, argv)
 {
-    funcall(a, b, c);
+    for (a; b; c)
+    {
+    }
+    return 0;
 }

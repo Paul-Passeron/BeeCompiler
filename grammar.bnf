@@ -1,13 +1,72 @@
-(* Bee Language Grammar *)
+<var_declaration>      ::= auto <identifier>
 
-program ::= <stmt_list>
+<var_assignment>       ::= <identifier> = <expression>
 
-stmt_list ::= <stmt>
-            | <stmt> ; <stmt_list>
+<block>                ::= <statement> 
+                         | <function def>
 
-var = <identifier>
+<program>              ::= <block list>
 
-stmt ::= <var> = <expression>
-        | <expression>
+<block list>           ::= <block> 
+                         | <block> <block list>
 
-expression = <>
+<if_statement>         ::= if (<expression>) <statement> 
+                         | if (<expression>) <statement> else <statement>
+
+<for_loop>             ::= for (<expression> ; <expression>; <expression>) <statement>
+
+<while_statement>      ::= while (<expression>) <statement>
+
+<return statement>     ::= return <expression> ;
+
+<argument list>        ::= <expression> 
+                         | <expression> , <argument list>
+
+<function call>        ::= <identifier>(<argument list>) 
+                         | <identifier>()
+
+<commpound statement>  ::= {<statement list>}
+
+<statement list>       ::= <statement> 
+                         | <statement> <statement_list>
+
+<fundef arg list >     ::= <identifier>
+                         | <identifier>, <fundef arg list>
+
+<function def>         ::= <identifier>()<compound statement> 
+                         | <identifier>(<fundef arg list>)<compound statement>
+
+<expression statement> ::= <expression>;
+
+<mult operator>        ::= * 
+                         | /
+                         | %
+
+<literal>              ::= <string lit>
+                         | <num lit>
+                         | <char lit>
+
+<factor>               ::= <function call>
+                         | <identifier>
+                         | <literal>
+
+<term>                 ::= <factor>
+                         | <factor> <mult operator> <factor>
+
+<mult operator>        ::= +
+                         | -
+
+<add expr>             ::= <term> 
+                         | <term> <add operator> <term>
+
+<expression>           ::= <var assignment>
+                         | <function call>
+                         | <add expr>
+
+<statement>            ::= <compound statement>
+                         | <if statement>
+                         | <for statement>
+                         | <while statement>
+                         | <return statement>
+                         | <expression>;
+

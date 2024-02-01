@@ -25,17 +25,27 @@ void parser_free(parser_t *p);
 
 void parser_tok_name(parser_token_t t);
 
-ast_t parse_expression(parser_t *p);
-ast_t parse_program(parser_t *p);
 ast_t parse_var_declaration(parser_t *p);
 ast_t parse_var_assignment(parser_t *p);
+ast_t parse_block(parser_t *p);
+ast_t parse_program(parser_t *p);
 ast_t parse_if_statement(parser_t *p);
 ast_t parse_for_loop(parser_t *p);
 ast_t parse_while_loop(parser_t *p);
 ast_t parse_return_statement(parser_t *p);
+ast_t parse_argument_list(parser_t *p);
 ast_t parse_function_call(parser_t *p);
+ast_t parse_compound_statement(parser_t *p);
+ast_t parse_identifier(parser_t *p);
 ast_t parse_function_def(parser_t *p);
-ast_t build_ast(parser_t *p);
+ast_t parse_expression_statement(parser_t *p);
+ast_t parse_literal(parser_t *p);
+ast_t parse_factor(parser_t *p);
+ast_t parse_term(parser_t *p);
+ast_t parse_add_expr(parser_t *p);
+ast_t parse_expression(parser_t *p);
+ast_t parse_statement(parser_t *p);
+// ast_t build_ast(parser_t *p);
 ast_t prog_to_ast(parser_t *p);
 
 #endif // PARSER_H

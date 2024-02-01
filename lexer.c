@@ -102,7 +102,7 @@ int is_keyword(char *s)
 {
 
     char *keywords[] = {"auto", "else", "if", "return", "while", "for"};
-    int n_k = sizeof(keywords) / sizeof(char *) - 1;
+    int n_k = sizeof(keywords) / sizeof(char *);
     for (int i = 0; i < n_k; i++)
     {
         if (strcmp(s, keywords[i]) == 0)

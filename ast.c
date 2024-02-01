@@ -280,8 +280,23 @@ void pretty_print_aux(ast_t a, int prof)
     break;
     case ast_if_stat:
     {
+        printf("\n");
         struct ast_if_stat data = a->data.ast_if_stat;
-        (void)data;
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("CONDITION:\n");
+        pretty_print_aux(data.cond, prof + 2);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("BODY:\n");
+        pretty_print_aux(data.body, prof + 2);
+        if (data.other)
+        {
+            for (int i = 0; i < prof + 1; i++)
+                printf("   ");
+            printf("ELSE:\n");
+            pretty_print_aux(data.other, prof + 2);
+        }
     }
     break;
     case ast_for_loop:
@@ -311,7 +326,7 @@ void pretty_print_aux(ast_t a, int prof)
             printf("[args]: ");
             for (int i = 0; i < data.arity; i++)
             {
-                // printf("'%s' ", data.args[i].lexeme);
+                printf("'%s' ", data.args[i]->data.ast_identifier.t.lexeme);
             }
             printf("\n");
         }
@@ -424,6 +439,13 @@ void pretty_print_aux(ast_t a, int prof)
     {
         struct ast_auto data = a->data.ast_auto;
         printf(": %s\n", data.t.lexeme);
+        if (data.rhs != NULL)
+        {
+            for (int i = 0; i < prof + 1; i++)
+                printf("   ");
+            printf("RHS:\n");
+            pretty_print_aux(data.rhs, prof + 2);
+        }
     }
     break;
     }

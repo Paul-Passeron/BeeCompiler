@@ -1,23 +1,16 @@
 #include "parser.h"
 #include "parser_tok.h"
 #include "error.h"
-// ast_t parse_expression(parser_t *p);
-// ast_t parse_program(parser_t *p);
-// ast_t parse_var_declaration(parser_t *p);
-// ast_t parse_var_assignment(parser_t *p);
-// ast_t parse_if_statement(parser_t *p);
-// ast_t parse_for_loop(parser_t *p);
-// ast_t parse_while_loop(parser_t *p);
-// ast_t parse_return_statement(parser_t *p)
-// ast_t parse_function_call(parser_t *p);
-// ast_t parse_function_def(parser_t *p);
 
-ast_t parse_binary_expression(parser_t *p);
-ast_t parse_function_def(parser_t *p);
-ast_t parse_statement(parser_t *p);
-
-ast_t build_ast(parser_t *p);
-ast_t prog_to_ast(parser_t *p);
+ast_t prog_to_ast(parser_t *p)
+{
+    return new_ast((node_t){
+        ast_program,
+        {.ast_program = {
+             .capacity = p->prog.capacity,
+             .length = p->prog.length,
+             .program = p->prog.data}}});
+}
 
 token_t peek_token(parser_t p, int k)
 {
@@ -89,9 +82,9 @@ void expect(parser_token_t expect, parser_token_t got)
     {
         printf("Expected '");
         parser_tok_name(expect);
-        printf("' token. Got: ");
+        printf("' token. Got: '");
         parser_tok_name(got);
-        printf(".\n");
+        printf("'.\n");
         exit(1);
     }
 }
@@ -100,11 +93,12 @@ ast_t parse_var_declaration(parser_t *p)
 {
     // We expect it to be auto (or maybe a type name in the future)
     // production rule:
-    // <var_declaration> ::= auto <identifier>
+    // <var declaration> ::= auto <identifier>
     expect(key_auto, peek_next_type(*p));
     p->current++;
     token_t variable = peek_next_token(*p);
     expect(tok_iden, peek_next_type(*p));
+    ast_t rhs = NULL;
     if (peek_type(*p, 1) == del_semicol)
         p->current++;
     else if (peek_type(*p, 1) != op_assign)
@@ -114,9 +108,14 @@ ast_t parse_var_declaration(parser_t *p)
         printf("TODO: Syntax Error: Invalid variable definition.\n");
         exit(1);
     }
+    else
+    {
+        p->current += 2;
+        rhs = parse_expression(p);
+    }
 
     return new_ast((node_t){
-        ast_auto, {.ast_auto.t = variable}});
+        ast_auto, {.ast_auto = {.t = variable, .rhs = rhs}}});
 }
 
 ast_t parse_var_assignment(parser_t *p)
@@ -134,14 +133,49 @@ ast_t parse_var_assignment(parser_t *p)
         ast_assignment, {.ast_assignment = {.t = variable, .rhs = parse_expression(p)}}});
 }
 
+int is_function_def(parser_t p)
+{
+    if (peek_type(p, 0) != tok_iden)
+    {
+        return 0;
+    }
+    if (peek_type(p, 1) != del_openparen)
+        return 0;
+    int k = 2;
+    int scope = 1;
+    while (p.current + k < p.tokens.length && scope > 0)
+    {
+        parser_token_t curr = peek_type(p, k);
+        k++;
+        if (curr == del_openbra || curr == del_openparen)
+            scope++;
+        else if (curr == del_closebra || curr == del_closeparen)
+            scope--;
+    }
+    if (peek_type(p, k) == del_openbra)
+        return 1;
+    return 0;
+}
+
+ast_t parse_block(parser_t *p)
+{
+    // production rule:
+    // <block> ::= <statement> | <function def>
+    // First trying to see if it is a function def
+    if (is_function_def(*p))
+        return parse_function_def(p);
+    // so we have a statement
+    return parse_statement(p);
+}
+
 ast_t parse_program(parser_t *p)
 {
     // parse every statements until end of file
     // production rule:
-    // <program> ::= <statement list>
-    // <statement list> ::= <statement> | <statement> <statement_list>
+    // <program> ::= <block list>
+    // <block list> ::= <block> | <block> <block list>
     while (!is_eof(*p))
-        ast_stack_push(&p->prog, parse_statement(p));
+        ast_stack_push(&p->prog, parse_block(p));
     return prog_to_ast(p);
 }
 
@@ -189,6 +223,7 @@ ast_t parse_for_loop(parser_t *p)
     ast_t condition = parse_expression(p);
     // Then we expect the 2nd semicolon
     expect(del_semicol, peek_next_type(*p));
+    p->current++;
     ast_t iterator = parse_expression(p);
     // We expect the final closing parenthesis
     expect(del_closeparen, peek_next_type(*p));
@@ -230,6 +265,7 @@ ast_t parse_return_statement(parser_t *p)
     ast_t returned_expression = parse_expression(p);
     // We expect a semicolon
     expect(del_semicol, peek_next_type(*p));
+    p->current++;
     return new_ast((node_t){
         ast_return, {.ast_return = {.expression = returned_expression}}});
 }
@@ -242,7 +278,10 @@ ast_t parse_argument_list(parser_t *p)
     ast_stack_create(&s);
     ast_stack_push(&s, parse_expression(p));
     while (peek_next_type(*p) == del_comma)
+    {
+        p->current++;
         ast_stack_push(&s, parse_expression(p));
+    }
 
     return new_ast((node_t){
         ast_funccallargs, {.ast_funccallargs = {.args = s.data, .capacity = s.capacity, .length = s.length}}});
@@ -272,6 +311,8 @@ ast_t parse_function_call(parser_t *p)
         arity = arg_list->data.ast_funccallargs.length;
         capacity = arg_list->data.ast_funccallargs.capacity;
     }
+    // skip the closed parenthesis
+    p->current++;
     return new_ast((node_t){
         ast_function_call, {.ast_function_call = {.args = args, .arity = arity, .capacity = capacity, .t = function}}});
 }
@@ -290,6 +331,8 @@ ast_t parse_compound_statement(parser_t *p)
     // parsing the statement list until we encounter the associated closing bracket
     while (peek_next_type(*p) != del_closebra)
         ast_stack_push(&scope, parse_statement(p));
+    // skipping the closing bracket
+    p->current++;
     return new_ast((node_t){ast_scope, {.ast_scope = {.capacity = scope.capacity, .length = scope.length, .statements = scope.data}}});
 }
 
@@ -314,8 +357,12 @@ ast_stack_t parse_fundef_arg_list(parser_t *p)
 
     expect(tok_iden, peek_next_type(*p));
     ast_stack_push(&args, parse_identifier(p));
+    printf("args.length: %d\n", args.length);
     while (peek_next_type(*p) == del_comma)
+    {
+        p->current++;
         ast_stack_push(&args, parse_identifier(p));
+    }
     return args;
 }
 
@@ -333,9 +380,9 @@ ast_t parse_function_def(parser_t *p)
 
     ast_stack_t args = {0};
 
-    if (peek_next_type(*p) == del_closeparen)
+    if (peek_next_type(*p) != del_closeparen)
     {
-        // no argument in function def
+        // at least one argument in function def
         args = parse_fundef_arg_list(p);
     }
     // expect a closing parenthesis
@@ -344,4 +391,201 @@ ast_t parse_function_def(parser_t *p)
     ast_t body = parse_compound_statement(p);
     return new_ast((node_t){
         ast_function_def, {.ast_function_def = {.args = args.data, .arity = args.length, .capacity = args.capacity, .t = function, .body = body}}});
+}
+
+ast_t parse_expression_statement(parser_t *p)
+{
+    // production rule
+    // <expression statement> ::= <expression>;
+    ast_t expr = parse_expression(p);
+    // We expect a semicolon
+    expect(del_semicol, peek_next_type(*p));
+    return expr;
+}
+
+int is_mul_op(parser_token_t operator)
+{
+    return (operator== op_mult || operator== op_div || operator== op_mod);
+}
+
+token_t parse_multiplicative_operator(parser_t *p)
+{
+    // production rule
+    // <mult operator> ::= * | / | %
+    parser_token_t operator= peek_next_type(*p);
+    token_t name = peek_next_token(*p);
+    p->current++;
+    if (is_mul_op(operator))
+        return name;
+    printf("TODO: Syntax Error: Expected a multiplicative operator. Got: '");
+    parser_tok_name(operator);
+    printf("'.\n");
+    exit(1);
+}
+
+int is_literal(parser_token_t t)
+{
+    switch (t)
+    {
+    case tok_numlit:
+    case tok_strlit:
+    case tok_charlit:
+        return 1;
+
+    default:
+        return 0;
+    }
+}
+
+ast_t parse_literal(parser_t *p)
+{
+    // production rule:
+    // <literal> ::= <string lit> | <num lit> | <char lit>
+    parser_token_t tok = peek_next_type(*p);
+    token_t v = peek_next_token(*p);
+    p->current++;
+    if (!is_literal(tok))
+    {
+        // TODO
+        printf("TODO: Syntax Error: Expected literal. Got: '");
+        parser_tok_name(tok);
+        printf("'\n");
+        exit(1);
+    }
+    return new_ast((node_t){
+        ast_literal, {.ast_literal = {.t = v}}});
+}
+
+ast_t parse_factor(parser_t *p)
+{
+    // production rule:
+    // <factor> ::= <function call>
+    //          | <identifier>
+    //          | <literal>
+    //          | (expression)
+
+    if (peek_next_type(*p) == del_openparen)
+    {
+        p->current++;
+        ast_t res = parse_expression(p);
+        expect(del_closeparen, peek_next_type(*p));
+        p->current++;
+        return res;
+    }
+    // We expect a literal ot an identifier
+
+    // Trying literal
+    if (is_literal(peek_next_type(*p)))
+        return parse_literal(p);
+    // Trying function call
+    if (peek_type(*p, 1) == del_openparen)
+        return parse_function_call(p);
+    // Must be an identifier
+    return parse_identifier(p);
+}
+
+ast_t parse_term(parser_t *p)
+{
+    // production rule:
+    // <term> ::= <factor> | <factor> <mult operator> <factor>
+
+    // First we parse a factor
+    ast_t lhs = parse_factor(p);
+    // check if next is multiplication
+    if (!is_mul_op(peek_next_type(*p)))
+        return lhs;
+
+    token_t operator= parse_multiplicative_operator(p);
+    ast_t rhs = parse_factor(p);
+    return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+int is_add_op(parser_token_t operator)
+{
+    return (operator== op_plus || operator== op_minus);
+}
+
+token_t parse_additive_operator(parser_t *p)
+{
+    // production rule
+    // <mult operator> ::= + | -
+    parser_token_t operator= peek_next_type(*p);
+    token_t name = peek_next_token(*p);
+    p->current++;
+    if (is_add_op(operator))
+        return name;
+    printf("TODO: Syntax Error: Expected an additive operator. Got: '");
+    parser_tok_name(operator);
+    printf("'.\n");
+    exit(1);
+}
+
+ast_t parse_add_expr(parser_t *p)
+{
+    // production rule:
+    // <add expr> ::= <term> | <term> <add operator> <add_expr>
+    // First we parse a term
+    ast_t lhs = parse_term(p);
+    // First production rule or 2nd one ?
+    if (is_add_op(peek_next_type(*p)))
+    {
+        // Second one
+        token_t operator= parse_additive_operator(p);
+        ast_t rhs = parse_add_expr(p);
+        return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+    }
+    // First one
+    return lhs;
+}
+
+ast_t parse_expression(parser_t *p)
+{
+    // production rules
+    // <expression> ::= <var assignment>
+    //                | <var declaration>
+    //                | <function call>
+    //                | <add expr>
+    //                | ...
+
+    // Trying to see if we have a var assignment
+    if (peek_next_type(*p) == tok_iden && peek_type(*p, 1) == op_assign)
+        return parse_var_assignment(p);
+    if (peek_next_type(*p) == key_auto)
+        return parse_var_declaration(p);
+    // Trying to see if we have a function call
+    if (peek_next_type(*p) == tok_iden && peek_type(*p, 1) == del_openparen)
+        return parse_function_call(p);
+    if (peek_next_type(*p) == del_semicol)
+        return NULL;
+    // Must be an add expr
+    return parse_add_expr(p);
+}
+
+ast_t parse_statement(parser_t *p)
+{
+    // production rule
+    // <statement> ::= <compound statement>
+    //               | <if statement>
+    //               | <for statement>
+    //               | <while statement>
+    //               | <return statement>
+    //               | <expression>;
+    parser_token_t t = peek_next_type(*p);
+    if (t == del_openbra)
+        return parse_compound_statement(p);
+    if (t == key_if)
+        return parse_if_statement(p);
+    if (t == key_for)
+        return parse_for_loop(p);
+    if (t == key_while)
+        return parse_while_loop(p);
+    if (t == key_return)
+        return parse_return_statement(p);
+
+    ast_t expr = parse_expression(p);
+    expect(del_semicol, peek_next_type(*p));
+    p->current++;
+    return expr;
 }
