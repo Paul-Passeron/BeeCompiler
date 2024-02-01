@@ -12,7 +12,7 @@ char *read_entire_file(char *filename)
     FILE *f = fopen(filename, "rb");
     if (f == NULL)
     {
-        perror("Could not open file.\n");
+        perror("Could not open file: ");
         exit(1);
     }
     fseek(f, 0, SEEK_END);
@@ -475,4 +475,10 @@ void print_token_array(lexer_t l)
         print_token(l.tokens.data[i]);
         printf("\n");
     }
+}
+
+void lex_prog(lexer_t *l)
+{
+    while (*(l->remaining))
+        step_lexer(l);
 }

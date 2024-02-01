@@ -30,4 +30,5 @@ void step_lexer(lexer_t *l);
 
 void print_token_array(lexer_t l);
 
+void lex_prog(lexer_t *l);
 #endif // LEXER_H

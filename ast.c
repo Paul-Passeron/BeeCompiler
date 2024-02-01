@@ -24,6 +24,8 @@ node_t empty_program()
 
 void free_ast(ast_t a)
 {
+    if (a == NULL)
+        return;
     switch (a->tag)
     {
     case ast_bin_op:
@@ -72,7 +74,8 @@ void free_ast(ast_t a)
         struct ast_function_call data = a->data.ast_function_call;
         for (int i = 0; i < data.arity; i++)
             free_ast(data.args[i]);
-        free(data.args);
+        if (data.args != NULL)
+            free(data.args);
     }
     break;
     case ast_assignment:
@@ -125,7 +128,8 @@ void free_ast(ast_t a)
         struct ast_scope data = a->data.ast_scope;
         for (int i = 0; i < data.length; i++)
             free_ast(data.statements[i]);
-        free(data.statements);
+        if (data.statements != NULL)
+            free(data.statements);
     }
     break;
     case ast_funccallargs:
@@ -133,7 +137,8 @@ void free_ast(ast_t a)
         struct ast_funccallargs data = a->data.ast_funccallargs;
         for (int i = 0; i < data.length; i++)
             free_ast(data.args[i]);
-        free(data.args);
+        if (data.args != NULL)
+            free(data.args);
     }
     break;
     case ast_auto:
