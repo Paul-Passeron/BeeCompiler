@@ -62,6 +62,9 @@ void free_ast(ast_t a)
         struct ast_function_def data = a->data.ast_function_def;
         // token_array_free(&data.args);
         free_ast(data.body);
+        for (int i = 0; i < data.arity; i++)
+            free_ast(data.args[i]);
+        free(data.args);
     }
     break;
     case ast_function_call:
@@ -69,6 +72,7 @@ void free_ast(ast_t a)
         struct ast_function_call data = a->data.ast_function_call;
         for (int i = 0; i < data.arity; i++)
             free_ast(data.args[i]);
+        free(data.args);
     }
     break;
     case ast_assignment:
@@ -86,6 +90,7 @@ void free_ast(ast_t a)
     case ast_literal:
     {
         // struct ast_literal data = a->data.ast_literal;
+
         // Nothing else to do
     }
     break;
@@ -106,6 +111,7 @@ void free_ast(ast_t a)
         struct ast_program data = a->data.ast_program;
         for (int i = 0; i < data.length; i++)
             free_ast(data.program[i]);
+        // free(data.program);
     }
     break;
     case ast_return:
@@ -118,9 +124,7 @@ void free_ast(ast_t a)
     {
         struct ast_scope data = a->data.ast_scope;
         for (int i = 0; i < data.length; i++)
-        {
             free_ast(data.statements[i]);
-        }
         free(data.statements);
     }
     break;
@@ -128,21 +132,21 @@ void free_ast(ast_t a)
     {
         struct ast_funccallargs data = a->data.ast_funccallargs;
         for (int i = 0; i < data.length; i++)
-        {
             free_ast(data.args[i]);
-        }
         free(data.args);
     }
     break;
     case ast_auto:
-        break;
+        struct ast_auto data = a->data.ast_auto;
+        if (data.rhs != NULL)
+            free_ast(data.rhs);
     }
     free(a); // No need to use FREE here
 }
 
 void ast_stack_create(ast_stack_t *s)
 {
-    int init_cap = 265;
+    int init_cap = 256;
     s->capacity = init_cap;
     s->length = 0;
     s->data = malloc(sizeof(ast_t) * init_cap);
@@ -302,7 +306,27 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_for_loop:
     {
         struct ast_for_loop data = a->data.ast_for_loop;
-        (void)data;
+        printf("\n");
+
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("INIT:\n");
+        pretty_print_aux(data.init, prof + 2);
+
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("CONDITION:\n");
+        pretty_print_aux(data.condition, prof + 2);
+
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("ITERATOR:\n");
+        pretty_print_aux(data.iterator, prof + 2);
+
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("BODY:\n");
+        pretty_print_aux(data.body, prof + 2);
     }
     break;
     case ast_while_loop:

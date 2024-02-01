@@ -1,72 +1,97 @@
-<var_declaration>      ::= auto <identifier>
+<var_declaration>        ::= auto <identifier>
 
-<var_assignment>       ::= <identifier> = <expression>
+<var_assignment>         ::= <identifier> = <expression>
 
-<block>                ::= <statement> 
-                         | <function def>
+<block>                  ::= <statement>
+                           | <function def>
 
-<program>              ::= <block list>
+<program>                ::= <block list>
 
-<block list>           ::= <block> 
-                         | <block> <block list>
+<block list>             ::= <block>
+                           | <block> <block list>
 
-<if_statement>         ::= if (<expression>) <statement> 
-                         | if (<expression>) <statement> else <statement>
+<if_statement>           ::= if (<expression>) <statement>
+                           | if (<expression>) <statement> else <statement>
 
-<for_loop>             ::= for (<expression> ; <expression>; <expression>) <statement>
+<for_loop>               ::= for (<expression> ; <expression>; <expression>) <statement>
 
-<while_statement>      ::= while (<expression>) <statement>
+<while_statement>        ::= while (<expression>) <statement>
 
-<return statement>     ::= return <expression> ;
+<return statement>       ::= return <expression> ;
 
-<argument list>        ::= <expression> 
-                         | <expression> , <argument list>
+<argument list>          ::= <expression>
+                           | <expression> , <argument list>
 
-<function call>        ::= <identifier>(<argument list>) 
-                         | <identifier>()
+<function call>          ::= <identifier>(<argument list>)
+                           | <identifier>()
 
-<commpound statement>  ::= {<statement list>}
+<commpound statement>    ::= {<statement list>}
 
-<statement list>       ::= <statement> 
-                         | <statement> <statement_list>
+<statement list>         ::= <statement>
+                           | <statement> <statement_list>
 
-<fundef arg list >     ::= <identifier>
-                         | <identifier>, <fundef arg list>
+<fundef arg list >       ::= <identifier>
+                           | <identifier>, <fundef arg list>
 
-<function def>         ::= <identifier>()<compound statement> 
-                         | <identifier>(<fundef arg list>)<compound statement>
+<function def>           ::= <identifier>()<compound statement>
+                           | <identifier>(<fundef arg list>)<compound statement>
 
-<expression statement> ::= <expression>;
+<expression statement>   ::= <expression>;
 
-<mult operator>        ::= * 
-                         | /
-                         | %
+<mult operator>          ::= *
+                           | /
+                           | %
 
-<literal>              ::= <string lit>
-                         | <num lit>
-                         | <char lit>
+<literal>                ::= <string lit>
+                           | <num lit>
+                           | <char lit>
 
-<factor>               ::= <function call>
-                         | <identifier>
-                         | <literal>
+<factor>                 ::= <function call>
+                           | <identifier>
+                           | <literal>
 
-<term>                 ::= <factor>
-                         | <factor> <mult operator> <factor>
+<term>                   ::= <factor>
+                           | <factor> <mult operator> <factor>
 
-<mult operator>        ::= +
-                         | -
+<mult operator>          ::= +
+                           | -
 
-<add expr>             ::= <term> 
-                         | <term> <add operator> <term>
+<add expr>               ::= <term>
+                           | <term> <add operator> < add expression>
 
-<expression>           ::= <var assignment>
+<comp operator>          ::= >
+                           | <
+                           | >=
+                           | <=
+                           | ==
+                           | !=
+
+<expression>             ::= <var assignment>
                          | <function call>
                          | <add expr>
 
-<statement>            ::= <compound statement>
-                         | <if statement>
-                         | <for statement>
-                         | <while statement>
-                         | <return statement>
-                         | <expression>;
+<statement>              ::= <compound statement>
+                           | <if statement>
+                           | <for statement>
+                           | <while statement>
+                           | <return statement>
+                           | <expression>;
 
+<relation expression>    ::= <addr expression>
+                           | <add expression> <relation operator> <relation epression>
+
+<bitwise and expression> ::= <relation expression>
+                           | <relation experssion> & <bitwise and expression>
+
+<bitwise xor expression> ::= <bitwise and expression>
+                           | <bitwise and expression> ^ <bitwise xor expression>
+
+<bitwise or expression>  ::= <bitwise xor expression>
+                           | <bitwise xor expression>
+                           | <bitwise or expression>
+
+<logical and expression> ::= <bitwise or expression>
+                           | <bitwise or expression> && <logical and expression>
+
+<logical or expression>  ::= <logical and expression>
+                           | <logical and expression> && <logical or expression>

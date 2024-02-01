@@ -69,6 +69,7 @@ void parser_free(parser_t *p)
     ast_stack_free(&p->scope);
     ast_stack_free(&p->prog);
     stack_free(&p->scope_variables);
+    // free(p->text);
 }
 
 int is_eof(parser_t p)
@@ -226,6 +227,7 @@ ast_t parse_for_loop(parser_t *p)
     p->current++;
     ast_t iterator = parse_expression(p);
     // We expect the final closing parenthesis
+
     expect(del_closeparen, peek_next_type(*p));
     p->current++;
     // parsing the body of the loop
@@ -357,7 +359,6 @@ ast_stack_t parse_fundef_arg_list(parser_t *p)
 
     expect(tok_iden, peek_next_type(*p));
     ast_stack_push(&args, parse_identifier(p));
-    printf("args.length: %d\n", args.length);
     while (peek_next_type(*p) == del_comma)
     {
         p->current++;
@@ -408,15 +409,16 @@ int is_mul_op(parser_token_t operator)
     return (operator== op_mult || operator== op_div || operator== op_mod);
 }
 
-token_t parse_multiplicative_operator(parser_t *p)
+token_t parse_operator(parser_t *p)
 {
     // production rule
     // <mult operator> ::= * | / | %
     parser_token_t operator= peek_next_type(*p);
     token_t name = peek_next_token(*p);
     p->current++;
-    if (is_mul_op(operator))
+    if (operator> key_for && operator<tok_iden)
         return name;
+
     printf("TODO: Syntax Error: Expected a multiplicative operator. Got: '");
     parser_tok_name(operator);
     printf("'.\n");
@@ -495,7 +497,7 @@ ast_t parse_term(parser_t *p)
     if (!is_mul_op(peek_next_type(*p)))
         return lhs;
 
-    token_t operator= parse_multiplicative_operator(p);
+    token_t operator= parse_operator(p);
     ast_t rhs = parse_factor(p);
     return new_ast((node_t){
             ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
@@ -521,10 +523,10 @@ token_t parse_additive_operator(parser_t *p)
     exit(1);
 }
 
-ast_t parse_add_expr(parser_t *p)
+ast_t parse_add_expression(parser_t *p)
 {
     // production rule:
-    // <add expr> ::= <term> | <term> <add operator> <add_expr>
+    // <add expr> ::= <term> | <term> <add operator> < add expression>
     // First we parse a term
     ast_t lhs = parse_term(p);
     // First production rule or 2nd one ?
@@ -532,7 +534,7 @@ ast_t parse_add_expr(parser_t *p)
     {
         // Second one
         token_t operator= parse_additive_operator(p);
-        ast_t rhs = parse_add_expr(p);
+        ast_t rhs = parse_add_expression(p);
         return new_ast((node_t){
             ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
     }
@@ -559,8 +561,8 @@ ast_t parse_expression(parser_t *p)
         return parse_function_call(p);
     if (peek_next_type(*p) == del_semicol)
         return NULL;
-    // Must be an add expr
-    return parse_add_expr(p);
+    // Must be a binary expression
+    return parse_binary_expression(p);
 }
 
 ast_t parse_statement(parser_t *p)
@@ -588,4 +590,108 @@ ast_t parse_statement(parser_t *p)
     expect(del_semicol, peek_next_type(*p));
     p->current++;
     return expr;
+}
+
+int is_relation_op(parser_token_t t)
+{
+    switch (t)
+    {
+    case op_grtr:
+    case op_grtr_eq:
+    case op_lssr:
+    case op_lssr_eq:
+    case op_eq:
+    case op_diff:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+ast_t parse_relation_expression(parser_t *p)
+{
+    // production rule:
+    // <relation expression> ::= <addr expression> | <add expression> <relation operator> <relation epression>
+    ast_t lhs = parse_add_expression(p);
+    if (!is_relation_op(peek_next_type(*p)))
+        return lhs;
+    token_t operator= parse_operator(p);
+    ast_t rhs = parse_relation_expression(p);
+      return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+ast_t parse_bitwise_and_expression(parser_t *p)
+{
+    // production rule:
+    // <bitwise and expression> ::= <relation expression>
+    //                            | <relation experssion> & <bitwise and expression>
+    ast_t lhs = parse_relation_expression(p);
+    if (peek_next_type(*p) != op_bit_and)
+        return lhs;
+    token_t operator= parse_operator(p);
+    ast_t rhs = parse_bitwise_and_expression(p);
+      return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+ast_t parse_bitwise_xor_expression(parser_t *p)
+{
+    // production rule:
+    // <bitwise xor expression> ::= <bitwise and expression>
+    //                            | <bitwise and expression> ^ <bitwise xor expression>
+    ast_t lhs = parse_bitwise_and_expression(p);
+    if (peek_next_type(*p) != op_bit_xor)
+        return lhs;
+    token_t operator= parse_operator(p);
+    ast_t rhs = parse_bitwise_xor_expression(p);
+      return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+ast_t parse_bitwise_or_expression(parser_t *p)
+{
+    // production rule:
+    // <bitwise or expression> ::= <bitwise xor expression>
+    //                            | <bitwise xor expression> | <bitwise or expression>
+    ast_t lhs = parse_bitwise_xor_expression(p);
+    if (peek_next_type(*p) != op_bit_or)
+        return lhs;
+    token_t operator= parse_operator(p);
+    ast_t rhs = parse_bitwise_or_expression(p);
+      return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+ast_t parse_logical_and_expression(parser_t *p)
+{
+    // production rule:
+    // <logical and expression> ::= <bitwise or expression>
+    //                            | <bitwise or expression> && <logical and expression>
+    ast_t lhs = parse_bitwise_or_expression(p);
+    if (peek_next_type(*p) != op_and)
+        return lhs;
+    token_t operator= parse_operator(p);
+    ast_t rhs = parse_logical_and_expression(p);
+      return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+ast_t parse_logical_or_expression(parser_t *p)
+{
+    // production rule:
+    // <logical or expression> ::= <logical and expression>
+    //                            | <logical and expression> && <logical or expression>
+    ast_t lhs = parse_logical_and_expression(p);
+    if (peek_next_type(*p) != op_or)
+        return lhs;
+    token_t operator= parse_operator(p);
+    ast_t rhs = parse_logical_or_expression(p);
+      return new_ast((node_t){
+            ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
+}
+
+ast_t parse_binary_expression(parser_t *p)
+{
+    return parse_logical_or_expression(p);
 }

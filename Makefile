@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -g
 
-all:clean main lines
+all:clean bee lines
 debug_run: clean main lines 
 	gdb --args ./main test.b
 stack.o: stack.h
@@ -13,7 +13,7 @@ parser_tok.o: parser.h ast.h stack.h lexer.h
 ast.o: ast.h token.h common.h stack.h
 common.o: common.h
 error.o: error.h
-main: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o parser_tok.o
+bee: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o parser_tok.o
 
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -25,4 +25,4 @@ lines:
 	wc -l $$( find -name '*.[hcb]') | tail -n 1
 
 run:
-	./main test.b
+	./bee test.b

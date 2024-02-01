@@ -42,9 +42,16 @@ ast_t parse_expression_statement(parser_t *p);
 ast_t parse_literal(parser_t *p);
 ast_t parse_factor(parser_t *p);
 ast_t parse_term(parser_t *p);
-ast_t parse_add_expr(parser_t *p);
+ast_t parse_add_expression(parser_t *p);
 ast_t parse_expression(parser_t *p);
 ast_t parse_statement(parser_t *p);
+ast_t parse_relation_expression(parser_t *p);
+ast_t parse_bitwise_and_expression(parser_t *p);
+ast_t parse_bitwise_xor_expression(parser_t *p);
+ast_t parse_bitwise_or_expression(parser_t *p);
+ast_t parse_logical_and_expression(parser_t *p);
+ast_t parse_logical_or_expression(parser_t *p);
+ast_t parse_binary_expression(parser_t *p);
 // ast_t build_ast(parser_t *p);
 ast_t prog_to_ast(parser_t *p);
 

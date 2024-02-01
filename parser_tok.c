@@ -289,6 +289,12 @@ parser_token_t get_type(token_t t)
                 return op_address;
             case '@':
                 return op_deref;
+            // case '&':
+            //     return op_bit_and;
+            case '|':
+                return op_bit_or;
+            case '^':
+                return op_bit_xor;
             default:
                 return err_tok;
             }

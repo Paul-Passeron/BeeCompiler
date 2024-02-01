@@ -31,6 +31,9 @@ typedef enum
     op_address,
     op_incr,
     op_decr,
+    op_bit_and,
+    op_bit_or,
+    op_bit_xor,
     // delimeters
     del_openbra,
     del_closebra,
@@ -50,9 +53,9 @@ typedef enum
 } parser_token_t;
 
 void parser_tok_name(parser_token_t t);
-int is_right_asso(parser_token_t t);
+// int is_right_asso(parser_token_t t);
 parser_token_t get_type(token_t t);
-int get_assoc(parser_token_t t);
-int get_precedence(parser_token_t t);
+// int get_assoc(parser_token_t t);
+// int get_precedence(parser_token_t t);
 
 #endif // PARSER_TOK_H
