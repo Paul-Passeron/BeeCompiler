@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "lexer.h"
 #include "parser.h"
@@ -43,20 +44,47 @@ int main(int argc, char **argv)
         else if (output == NULL)
             output = argv[i];
     }
-    (void)output;
+
+    if (input == NULL)
+    {
+        printf("You should input an input filename\n");
+        exit(1);
+    }
+
+    if (output == NULL)
+    {
+        printf("You should input an output filename\n");
+        exit(1);
+    }
 
     lexer_t lexer;
     parser_t parser;
     lexer_create(&lexer, input);
     lex_prog(&lexer);
+
     if (print_lexemes)
         print_token_array(lexer);
+
     parser_create(&parser, lexer);
     ast_t ast = parse_program(&parser);
+
     if (print_tree)
         pretty_print(ast);
-    free_ast(ast);
+
+    generator_t g = create_generator(ast, output);
+    print_entry(g);
+    print_exit(g, 54);
+    destroy_generator(g);
+    // free_ast(ast);
+
+    char cmd[256];
+    memset(cmd, 0, 256);
     parser_free(&parser);
     lexer_free(&lexer);
+
+    sprintf(cmd, "fasm %s %s.out && chmod u+x %s.out", output, output, output);
+    printf("[CMD] : %s\n", cmd);
+    system(cmd);
+
     return 0;
 }

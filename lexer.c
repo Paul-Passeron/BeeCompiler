@@ -12,7 +12,8 @@ char *read_entire_file(char *filename)
     FILE *f = fopen(filename, "rb");
     if (f == NULL)
     {
-        perror("Could not open file: ");
+        printf("Could not open file '%s': ", filename);
+        perror("");
         exit(1);
     }
     fseek(f, 0, SEEK_END);
