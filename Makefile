@@ -8,16 +8,17 @@ debug_run: clean main lines
 
 stack.o: stack.h
 main.o: stack.h
-lexer.o: lexer.h token.h error.h
-token.o: token.h
-parser.o: parser.h ast.h stack.h lexer.h
+lexer.o: lexer.h token.h error.h type.h
+token.o: token.h type.h
+parser.o: parser.h ast.h stack.h lexer.h type.h
 parser_tok.o: parser.h ast.h stack.h lexer.h
 ast.o: ast.h token.h common.h stack.h
 common.o: common.h
 error.o: error.h
 generator.o: generator.h ast.h parser_tok.h
+type.o: type.h
 
-bee: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o parser_tok.o generator.o
+bee: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o parser_tok.o generator.o type.o
 
 	$(CC) $(CFLAGS) -o $@ $^
 

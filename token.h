@@ -1,9 +1,11 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 #include "common.h"
+#include "type.h"
 
 typedef enum
 {
+    TYPE,
     KEYWORD,
     DELIMITER,
     NUM_LIT,

@@ -1,0 +1,78 @@
+#include "type.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+type_type_t regular_type_type_from_lexeme(char *s)
+{
+    if (strcmp(s, "i64"))
+        return type_i64;
+
+    if (strcmp(s, "i32"))
+        return type_i32;
+
+    if (strcmp(s, "i16"))
+        return type_i16;
+
+    if (strcmp(s, "i8"))
+        return type_i8;
+
+    if (strcmp(s, "u64"))
+        return type_u64;
+
+    if (strcmp(s, "u32"))
+        return type_u32;
+
+    if (strcmp(s, "u16"))
+        return type_u16;
+
+    if (strcmp(s, "u8"))
+        return type_u8;
+
+    if (strcmp(s, "char"))
+        return type_char_t;
+    return type_error;
+}
+
+type_t *regular_type_from_lexeme(char *s)
+{
+    type_t *ptr = malloc(sizeof(type_t));
+    if (ptr == NULL)
+    {
+        printf("Not enough memory\n");
+        exit(1);
+    }
+    *ptr = (type_t){.type = regular_type_type_from_lexeme(s), .t = NULL};
+    return ptr;
+}
+
+size_t size_of_type(type_t t)
+{
+
+    switch (t.type)
+    {
+    case type_i64:
+        return 8;
+    case type_i32:
+        return 4;
+    case type_i16:
+        return 2;
+    case type_i8:
+        return 1;
+    case type_u64:
+        return 8;
+    case type_u32:
+        return 4;
+    case type_u16:
+        return 2;
+    case type_u8:
+        return 1;
+    case type_char_t:
+        return 1;
+    case type_pointer_t:
+        return POINTER_SIZE;
+    default:
+        break;
+    }
+    return 0;
+}

@@ -101,12 +101,23 @@ int get_end_of_splitter(char *s)
 
 int is_keyword(char *s)
 {
-
     char *keywords[] = {"auto", "else", "if", "return", "while", "for"};
     int n_k = sizeof(keywords) / sizeof(char *);
     for (int i = 0; i < n_k; i++)
     {
         if (strcmp(s, keywords[i]) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+int is_type(char *s)
+{
+    char *type[] = {"i64", "i32", "i16", "i8", "u64", "u32", "u16", "u8", "char", "pointer"};
+    int n_k = sizeof(type) / sizeof(char *);
+    for (int i = 0; i < n_k; i++)
+    {
+        if (strcmp(s, type[i]) == 0)
             return 1;
     }
     return 0;
@@ -446,21 +457,21 @@ void step_lexer(lexer_t *l)
 
         if (is_keyword(buffer))
             tok.type = KEYWORD;
+        else if (is_type(buffer))
+            tok.type = TYPE;
+        else if (is_identifier(tok.lexeme))
+            tok.type = IDENTIFIER;
         else
         {
-            if (is_identifier(tok.lexeme))
-                tok.type = IDENTIFIER;
-            else
-            {
-                // Syntax error
-                error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, UNEXP_CHAR);
-                print_syntax_error(syntax_err);
-                l->flag |= SYNTAX_ERROR;
-                l->remaining++;
-                l->col++;
-                return;
-            }
+            // Syntax error
+            error_reporter_t syntax_err = create_error_l(*l, SYNTAX_ERROR, UNEXP_CHAR);
+            print_syntax_error(syntax_err);
+            l->flag |= SYNTAX_ERROR;
+            l->remaining++;
+            l->col++;
+            return;
         }
+
         token_array_push(&l->tokens, tok);
         l->col += next_split_offset;
         l->remaining += next_split_offset;

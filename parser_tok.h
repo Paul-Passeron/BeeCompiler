@@ -47,6 +47,7 @@ typedef enum
     tok_strlit,
     tok_numlit,
     tok_charlit,
+    tok_type,
 
     err_tok,
 

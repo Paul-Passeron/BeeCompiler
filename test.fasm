@@ -5,6 +5,8 @@ segment readable executable
 entry start
 
 start:
+
+    ; exit syscall with exit code 
     mov rax, 60
     mov rdi, 0
     syscall

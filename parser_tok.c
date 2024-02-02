@@ -209,11 +209,12 @@ int is_right_asso(parser_token_t t)
 parser_token_t get_type(token_t t)
 {
     if (t.lexeme == NULL)
-    {
         return err_tok;
-    }
+
     switch (t.type)
     {
+    case TYPE:
+        return tok_type;
     case KEYWORD:
     {
         if (strcmp(t.lexeme, "auto") == 0)

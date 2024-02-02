@@ -57,6 +57,9 @@ void print_type(token_type_t t)
 {
     switch (t)
     {
+    case TYPE:
+        printf("Type");
+        break;
     case KEYWORD:
         printf("Keyword");
         break;

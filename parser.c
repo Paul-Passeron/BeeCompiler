@@ -90,13 +90,31 @@ void expect(parser_token_t expect, parser_token_t got)
     }
 }
 
+type_t *parse_type(parser_t *p)
+{
+    expect(tok_type, peek_next_type(*p));
+    type_t *res = regular_type_from_lexeme(peek_next_token(*p).lexeme);
+    p->current++;
+    while (peek_next_type(*p) == op_mult)
+    {
+        type_t *tmp = res;
+        res = malloc(sizeof(type_t));
+        res->type = type_pointer_t;
+        res->t = tmp;
+        p->current++;
+    }
+    return res;
+}
+
 ast_t parse_var_declaration(parser_t *p)
 {
     // We expect it to be auto (or maybe a type name in the future)
     // production rule:
-    // <var declaration> ::= auto <identifier>
+    // <var declaration> ::= auto <type> <identifier>
     expect(key_auto, peek_next_type(*p));
     p->current++;
+    type_t *type = parse_type(p);
+
     token_t variable = peek_next_token(*p);
     expect(tok_iden, peek_next_type(*p));
     ast_t rhs = NULL;
@@ -116,7 +134,7 @@ ast_t parse_var_declaration(parser_t *p)
     }
 
     return new_ast((node_t){
-        ast_auto, {.ast_auto = {.t = variable, .rhs = rhs}}});
+        ast_auto, {.ast_auto = {.t = variable, .rhs = rhs, .type = type}}});
 }
 
 ast_t parse_var_assignment(parser_t *p)

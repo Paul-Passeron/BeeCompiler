@@ -133,6 +133,7 @@ struct node_t
         {
             token_t t;
             node_t *rhs;
+            type_t *type;
         } ast_auto;
 
         // struct ast_tmp_expr

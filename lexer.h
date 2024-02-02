@@ -6,6 +6,7 @@ char *read_entire_file(char *filename);
 #include "token.h"
 #include "common.h"
 #include "error.h"
+#include "type.h"
 
 typedef err_type_t flag_t;
 
