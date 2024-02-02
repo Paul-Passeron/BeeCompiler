@@ -2,27 +2,12 @@ format ELF64 executable 3
 segment readable executable
 entry start
 start:
-mov rax, 60
-mov rdi, 0
-syscall
+    call FUNCTION_main
+    mov rax, 60
+    mov rdi, 0
+    syscall
 
-FUNCTION_printn:
-    push rbp
-    mov rbp, rsp
-   ; Function code here
-    pop rbp
-    ret
-
-
-FUNCTION_main:
-    push rbp
-    mov rbp, rsp
-   ; Function code here
-    pop rbp
-    ret
-
-
-FUNCTION_div_by_10:
+FUNCTION_func:
     push rbp
     mov rbp, rsp
    ; Function code here

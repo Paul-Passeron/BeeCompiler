@@ -77,3 +77,12 @@ int stack_empty(stack_t s)
 {
     return s.length == 0;
 }
+
+void print_stack(stack_t s)
+{
+    while (!stack_empty(s))
+    {
+        stack_val_t var = stack_pop(&s);
+        printf("%s: addr=%d, size=%d\n", var.identifier, var.address, var.n_bytes);
+    }
+}

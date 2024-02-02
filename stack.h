@@ -31,4 +31,5 @@ stack_val_t stack_peek(stack_t *s);
 
 scope_elem_t get_scope_elem(char *identifier, stack_t s, int *found);
 
+void print_stack(stack_t s);
 #endif // STACK_H

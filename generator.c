@@ -31,14 +31,15 @@ void print_entry(generator_t g)
     fprintf(f, "segment readable executable\n");
     fprintf(f, "entry start\n");
     fprintf(f, "start:\n");
+    fprintf(f, "    call FUNCTION_main\n");
 }
 
 void print_exit(generator_t g, int exit_code)
 {
     FILE *f = g.out;
-    fprintf(f, "mov rax, 60\n");
-    fprintf(f, "mov rdi, %d\n", exit_code);
-    fprintf(f, "syscall\n");
+    fprintf(f, "    mov rax, 60\n");
+    fprintf(f, "    mov rdi, %d\n", exit_code);
+    fprintf(f, "    syscall\n");
 }
 
 void print_function_intro(generator_t g, char *function_name)
@@ -56,16 +57,41 @@ void print_function_outro(generator_t g)
     fprintf(f, "    ret\n");
 }
 
-void generate_function_def(generator_t g, ast_t funcall)
+void generate_function_def(generator_t g, ast_t fun)
 {
     FILE *f = g.out;
-    if (funcall->tag != ast_function_def)
+    if (fun->tag != ast_function_def)
         exit(17);
-    char *function_name = funcall->data.ast_function_def.t.lexeme;
+    struct ast_function_def fundef = fun->data.ast_function_def;
+    char *function_name = fun->data.ast_function_def.t.lexeme;
     print_function_intro(g, function_name);
+
+    // Pushing function arguments on the generator scope
+    int offset = 4;
+    int init_length = g.scope.length;
+
+    for (int i = 0; i < fundef.arity; i++)
+    {
+        struct ast_fundef_arg arg_data = fundef.args[i]->data.ast_fundef_arg;
+
+        type_t t = *arg_data.type;
+        int size = size_of_type(t);
+        char *name = arg_data.arg->data.ast_identifier.t.lexeme;
+        stack_val_t var;
+        var.address = offset;
+        var.n_bytes = size;
+        offset += size;
+        var.identifier = name;
+        var.scope_index = i;
+        stack_push(&g.scope, var);
+    }
+
     fprintf(f, "   ; Function code here\n");
     print_function_outro(g);
     fprintf(f, "\n");
+    print_stack(g.scope);
+    while (g.scope.length > init_length)
+        (void)stack_pop(&g.scope);
 }
 
 void generate_program(generator_t g)
@@ -82,6 +108,7 @@ void generate_program(generator_t g)
         if (block->tag == ast_function_def)
         {
             generate_function_def(g, block);
+
             fprintf(f, "\n");
         }
     }

@@ -264,6 +264,8 @@ void step_lexer(lexer_t *l)
             l->remaining++;
             while (*(l->remaining++) != '\n')
                 ;
+            l->col = 0;
+            l->line++;
         }
     }
     // string lit
