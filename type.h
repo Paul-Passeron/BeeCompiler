@@ -19,6 +19,7 @@ typedef enum
     type_u8,
     type_char_t,
     type_pointer_t,
+    type_void,
     type_error,
 } type_type_t;
 
@@ -31,5 +32,6 @@ typedef struct type
 type_t *regular_type_from_lexeme(char *s);
 
 size_t size_of_type(type_t t);
+void print_var_type(type_t *t);
 
 #endif // TYPE_H

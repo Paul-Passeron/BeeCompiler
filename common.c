@@ -2,7 +2,7 @@
 
 int is_splitter(char c)
 {
-    char splitters[] = " \n=+-*/;{}()<>\%|&,\"\'!";
+    char splitters[] = " \n=+-*/;{}()<>\%|&,\"\'![]";
     int splitters_count = sizeof(splitters) - 1;
 
     for (int i = 0; i < splitters_count; i++)

@@ -71,7 +71,7 @@ token_t new_openpar(void)
 int get_end_of_splitter(char *s)
 {
     // List of splitters:
-    // ' ', '\n', '=', '==', '+', '*', '-', '/', '%', '&&', '||', '(', ')', '{', '}', '>', '<', ';', '++', '--', '@(unary)', '&(unary)'
+    // ' ', '\n', '=', '==', '+', '*', '-', '/', '%', '&&', '||', '(', ')', '{', '}', '>', '<', ';', '++', '--', '@(unary)', '&(unary)', '[', ']'
 
     if (strlen(s) > 1)
     {
@@ -93,7 +93,7 @@ int get_end_of_splitter(char *s)
             return 2;
     }
     char c = *s;
-    if (c == '=' || c == '+' || c == '*' || c == '/' || c == '*' || c == '-' || c == '%' || c == '(' || c == ')' || c == '{' || c == '}' || c == '<' || c == '>' || c == ';' || c == ',' || c == '!' || c == '&' || c == '@')
+    if (c == '=' || c == '+' || c == '*' || c == '/' || c == '*' || c == '-' || c == '%' || c == '(' || c == ')' || c == '{' || c == '}' || c == '<' || c == '>' || c == ';' || c == ',' || c == '!' || c == '&' || c == '@' || c == '[' || c == ']')
         return 1;
     else
         return -1;
@@ -113,7 +113,7 @@ int is_keyword(char *s)
 
 int is_type(char *s)
 {
-    char *type[] = {"i64", "i32", "i16", "i8", "u64", "u32", "u16", "u8", "char", "pointer"};
+    char *type[] = {"i64", "i32", "i16", "i8", "u64", "u32", "u16", "u8", "char", "pointer", "void"};
     int n_k = sizeof(type) / sizeof(char *);
     for (int i = 0; i < n_k; i++)
     {

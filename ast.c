@@ -76,6 +76,7 @@ void free_ast(ast_t a)
             free_ast(data.args[i]);
         if (data.args != NULL)
             free(data.args);
+        free_ast(data.called);
     }
     break;
     case ast_assignment:
@@ -142,10 +143,24 @@ void free_ast(ast_t a)
     }
     break;
     case ast_auto:
+    {
         struct ast_auto data = a->data.ast_auto;
         if (data.rhs != NULL)
             free_ast(data.rhs);
     }
+    break;
+    case ast_fundef_arg:
+        // maybe free type ?
+        break;
+    case ast_subscript:
+    {
+        struct ast_subscript data = a->data.ast_subscript;
+        free_ast(data.array);
+        free_ast(data.subscript);
+    }
+    break;
+    }
+
     free(a); // No need to use FREE here
 }
 
@@ -261,6 +276,12 @@ void print_tag(node_t t)
     case ast_auto:
         printf("ast_auto");
         break;
+    case ast_fundef_arg:
+        printf("ast_fundef_arg");
+        break;
+    case ast_subscript:
+        printf("ast_subscript");
+        break;
     }
 }
 
@@ -276,7 +297,7 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_bin_op:
     {
         struct ast_bin_op data = a->data.ast_bin_op;
-        printf("%s:\n", data.t.lexeme);
+        printf(" %s:\n", data.t.lexeme);
         for (int i = 0; i < prof + 1; i++)
             printf("   ");
         printf("LHS:\n");
@@ -348,14 +369,20 @@ void pretty_print_aux(ast_t a, int prof)
             printf("   ");
         printf("[name]: ");
         printf("%s\n", data.t.lexeme);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("[return type]: ");
+        print_var_type(data.return_type);
+        printf("\n");
         if (data.arity > 0)
         {
             for (int i = 0; i < prof + 1; i++)
                 printf("   ");
-            printf("[args]: ");
+            printf("[args]:");
             for (int i = 0; i < data.arity; i++)
             {
-                printf("'%s' ", data.args[i]->data.ast_identifier.t.lexeme);
+                printf("\n");
+                pretty_print_aux(data.args[i], prof + 2);
             }
             printf("\n");
         }
@@ -372,8 +399,8 @@ void pretty_print_aux(ast_t a, int prof)
 
         for (int i = 0; i < prof + 1; i++)
             printf("   ");
-        printf("[name]: ");
-        printf("%s\n", data.t.lexeme);
+        printf("[called]:\n");
+        pretty_print_aux(data.called, prof + 2);
         if (data.arity > 0)
         {
             for (int i = 0; i < prof + 1; i++)
@@ -382,7 +409,7 @@ void pretty_print_aux(ast_t a, int prof)
             for (int i = 0; i < data.arity; i++)
             {
                 pretty_print_aux(data.args[i], prof + 2);
-                printf("\n");
+                // printf("\n");
             }
         }
     }
@@ -418,7 +445,11 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_unary_op:
     {
         struct ast_unary_op data = a->data.ast_unary_op;
-        (void)data;
+        printf(" (%s) %s:\n", data.postfix ? "postfix" : "prefix", data.t.lexeme);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("Operand:\n");
+        pretty_print_aux(data.operand, prof + 2);
     }
     break;
     case ast_expression:
@@ -467,7 +498,9 @@ void pretty_print_aux(ast_t a, int prof)
     case ast_auto:
     {
         struct ast_auto data = a->data.ast_auto;
-        printf(": %s\n", data.t.lexeme);
+        printf(": <");
+        print_var_type(data.type);
+        printf("> %s\n", data.t.lexeme);
         if (data.rhs != NULL)
         {
             for (int i = 0; i < prof + 1; i++)
@@ -475,6 +508,33 @@ void pretty_print_aux(ast_t a, int prof)
             printf("RHS:\n");
             pretty_print_aux(data.rhs, prof + 2);
         }
+    }
+    break;
+    case ast_fundef_arg:
+    {
+        struct ast_fundef_arg data = a->data.ast_fundef_arg;
+        printf("\n");
+
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("<");
+        print_var_type(data.type);
+        printf("> ");
+        printf("%s", data.arg->data.ast_identifier.t.lexeme);
+    }
+    break;
+    case ast_subscript:
+    {
+        struct ast_subscript data = a->data.ast_subscript;
+        printf("\n");
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("Array:\n");
+        pretty_print_aux(data.array, prof + 2);
+        for (int i = 0; i < prof + 1; i++)
+            printf("   ");
+        printf("subscript:\n");
+        pretty_print_aux(data.subscript, prof + 2);
     }
     break;
     }

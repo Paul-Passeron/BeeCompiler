@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     char *output = NULL;
     int print_tree = 0;
     int print_lexemes = 0;
+    int use_fasm = 0;
     for (int i = 1; i < argc; i++)
     {
         if (*argv[i] == '-')
@@ -33,6 +34,8 @@ int main(int argc, char **argv)
                 print_tree = 1;
             else if (argv[i][1] == 'l')
                 print_lexemes = 1;
+            else if (argv[i][1] == 'c')
+                use_fasm = 1;
             else
             {
                 printf("Unknown flag '%.2s'\n", argv[i]);
@@ -70,21 +73,25 @@ int main(int argc, char **argv)
 
     if (print_tree)
         pretty_print(ast);
-
-    generator_t g = create_generator(ast, output);
-    print_entry(g);
-    print_exit(g, 54);
-    destroy_generator(g);
+    if (use_fasm)
+    {
+        generator_t g = create_generator(ast, output);
+        print_entry(g);
+        print_exit(g, 54);
+        destroy_generator(g);
+    }
     // free_ast(ast);
 
     char cmd[256];
     memset(cmd, 0, 256);
     parser_free(&parser);
     lexer_free(&lexer);
-
-    sprintf(cmd, "fasm %s %s.out && chmod u+x %s.out", output, output, output);
-    printf("[CMD] : %s\n", cmd);
-    system(cmd);
+    if (use_fasm)
+    {
+        sprintf(cmd, "fasm %s %s.out && chmod u+x %s.out", output, output, output);
+        printf("[CMD] : %s\n", cmd);
+        system(cmd);
+    }
 
     return 0;
 }

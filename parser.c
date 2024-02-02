@@ -1,7 +1,7 @@
 #include "parser.h"
 #include "parser_tok.h"
 #include "error.h"
-
+#include <string.h>
 ast_t prog_to_ast(parser_t *p)
 {
     return new_ast((node_t){
@@ -154,13 +154,18 @@ ast_t parse_var_assignment(parser_t *p)
 
 int is_function_def(parser_t p)
 {
-    if (peek_type(p, 0) != tok_iden)
-    {
+    int l = 0;
+    if (peek_type(p, 0) != tok_type)
+
         return 0;
-    }
-    if (peek_type(p, 1) != del_openparen)
+
+    while (peek_type(p, ++l) == op_mult)
+        ;
+    if (peek_type(p, l) != tok_iden)
         return 0;
-    int k = 2;
+    if (peek_type(p, l + 1) != del_openparen)
+        return 0;
+    int k = l + 2;
     int scope = 1;
     while (p.current + k < p.tokens.length && scope > 0)
     {
@@ -172,7 +177,10 @@ int is_function_def(parser_t p)
             scope--;
     }
     if (peek_type(p, k) == del_openbra)
+    {
         return 1;
+    }
+    printf("No openbra\n");
     return 0;
 }
 
@@ -307,36 +315,6 @@ ast_t parse_argument_list(parser_t *p)
         ast_funccallargs, {.ast_funccallargs = {.args = s.data, .capacity = s.capacity, .length = s.length}}});
 }
 
-ast_t parse_function_call(parser_t *p)
-{
-    // production rule:
-    // <function call> ::= <identifier>(<argument list>) | <identifier>()
-    // We expect an identifier
-    expect(tok_iden, peek_next_type(*p));
-    token_t function = peek_next_token(*p);
-    p->current++;
-    // We expect an open parenthesis
-    expect(del_openparen, peek_next_type(*p));
-    p->current++;
-    // We check whether or not there are arguments
-    ast_t *args = NULL;
-    int arity = 0;
-    int capacity = 0;
-
-    if (peek_next_type(*p) != del_closeparen)
-    {
-        // Function call with at least 1 argument
-        ast_t arg_list = parse_argument_list(p);
-        args = arg_list->data.ast_funccallargs.args;
-        arity = arg_list->data.ast_funccallargs.length;
-        capacity = arg_list->data.ast_funccallargs.capacity;
-    }
-    // skip the closed parenthesis
-    p->current++;
-    return new_ast((node_t){
-        ast_function_call, {.ast_function_call = {.args = args, .arity = arity, .capacity = capacity, .t = function}}});
-}
-
 ast_t parse_compound_statement(parser_t *p)
 {
     // production rule:
@@ -367,20 +345,33 @@ ast_t parse_identifier(parser_t *p)
         ast_identifier, {.ast_identifier = {.t = identifier}}});
 }
 
+ast_t parse_fundef_arg(parser_t *p)
+{
+    // production rule:
+    // <fun def arg> ::= <type> <identifier>
+    type_t *t = parse_type(p);
+    ast_t arg = parse_identifier(p);
+    return new_ast((node_t){
+        ast_fundef_arg,
+        {.ast_fundef_arg = {
+             .arg = arg,
+             .type = t}}});
+}
+
 ast_stack_t parse_fundef_arg_list(parser_t *p)
 {
     // production rule:
-    // <fundef arg list > ::= <identifier> | <identifier>, <fundef arg list>
+    // <fundef arg list > ::= <fun def arg> | <fun def arg>, <fundef arg list>
     // we expect an identifier
     ast_stack_t args;
     ast_stack_create(&args);
 
-    expect(tok_iden, peek_next_type(*p));
-    ast_stack_push(&args, parse_identifier(p));
+    // parse_fundef_arg()
+    ast_stack_push(&args, parse_fundef_arg(p));
     while (peek_next_type(*p) == del_comma)
     {
         p->current++;
-        ast_stack_push(&args, parse_identifier(p));
+        ast_stack_push(&args, parse_fundef_arg(p));
     }
     return args;
 }
@@ -390,6 +381,8 @@ ast_t parse_function_def(parser_t *p)
     // production rule:
     // <function def> ::= <identifier>()<compound statement> | <identifier>(<fundef arg list>)<compound statement>
     // expect an identifier
+    expect(tok_type, peek_next_type(*p));
+    type_t *return_type = parse_type(p);
     expect(tok_iden, peek_next_type(*p));
     token_t function = peek_next_token(*p);
     p->current++;
@@ -409,7 +402,7 @@ ast_t parse_function_def(parser_t *p)
     p->current++;
     ast_t body = parse_compound_statement(p);
     return new_ast((node_t){
-        ast_function_def, {.ast_function_def = {.args = args.data, .arity = args.length, .capacity = args.capacity, .t = function, .body = body}}});
+        ast_function_def, {.ast_function_def = {.args = args.data, .return_type = return_type, .arity = args.length, .capacity = args.capacity, .t = function, .body = body}}});
 }
 
 ast_t parse_expression_statement(parser_t *p)
@@ -497,26 +490,153 @@ ast_t parse_factor(parser_t *p)
     // Trying literal
     if (is_literal(peek_next_type(*p)))
         return parse_literal(p);
-    // Trying function call
-    if (peek_type(*p, 1) == del_openparen)
-        return parse_function_call(p);
     // Must be an identifier
     return parse_identifier(p);
 }
 
-ast_t parse_term(parser_t *p)
+int is_prefix_operator(parser_token_t t)
+{
+    switch (t)
+    {
+    case op_decr:
+    case op_incr:
+    case op_plus:
+    case op_minus:
+    case op_not:
+    case op_bit_not:
+    case op_address:
+    // The same as the one above
+    case op_bit_and:
+    case op_deref:
+        return 1;
+    default:
+        break;
+    }
+    return 0;
+}
+
+token_t parse_unary_operator(parser_t *p)
+{
+    if (!is_prefix_operator(peek_next_type(*p)))
+    {
+        printf("TODO: Expected a prefix operator !\n");
+        exit(12);
+    }
+    token_t res = peek_next_token(*p);
+    p->current++;
+    return res;
+}
+
+// ast_t parse_function_call(parser_t *p)
+// {
+//     // production rule:
+//     // <function call> ::= <identifier>(<argument list>) | <identifier>()
+//     // We expect an identifier
+//     expect(tok_iden, peek_next_type(*p));
+//     token_t function = peek_next_token(*p);
+//     p->current++;
+//     // We expect an open parenthesis
+//     expect(del_openparen, peek_next_type(*p));
+//     p->current++;
+//     // We check whether or not there are arguments
+//     ast_t *args = NULL;
+//     int arity = 0;
+//     int capacity = 0;
+
+//     if (peek_next_type(*p) != del_closeparen)
+//     {
+//         // Function call with at least 1 argument
+//         ast_t arg_list = parse_argument_list(p);
+//         args = arg_list->data.ast_funccallargs.args;
+//         arity = arg_list->data.ast_funccallargs.length;
+//         capacity = arg_list->data.ast_funccallargs.capacity;
+//     }
+//     // skip the closed parenthesis
+//     p->current++;
+//     return new_ast((node_t){
+//         ast_function_call, {.ast_function_call = {.args = args, .arity = arity, .capacity = capacity, .t = function}}});
+// }
+
+ast_t parse_postfix_expression(parser_t *p)
 {
     // production rule:
-    // <term> ::= <factor> | <factor> <mult operator> <factor>
+    // <postfix expression> ::= <function call>
+    //                        | <array subscripting>
+    //                        | ...
+    // if no open parenthesis, we parse a factor
+    ast_t expr = parse_factor(p);
+
+    // corresponding on the next token, we do different things:
+    if (peek_next_type(*p) == del_openparen)
+    {
+        // We have a function call
+        // We expect an open parenthesis
+        p->current++;
+        ast_t *args = NULL;
+        int arity = 0;
+        int capacity = 0;
+        if (peek_next_type(*p) != del_closeparen)
+        {
+            // Function call with at least 1 argument
+            ast_t arg_list = parse_argument_list(p);
+            args = arg_list->data.ast_funccallargs.args;
+            arity = arg_list->data.ast_funccallargs.length;
+            capacity = arg_list->data.ast_funccallargs.capacity;
+        }
+        // skip the closed parenthesis
+        p->current++;
+        return new_ast((node_t){
+            ast_function_call, {.ast_function_call = {.args = args, .arity = arity, .capacity = capacity, .called = expr}}});
+    }
+    else if (peek_next_type(*p) == del_opensqua)
+    {
+        // We have array subscripting
+        p->current++;
+        ast_t subscript = parse_expression(p);
+        // expect closing matching square bracket
+        expect(del_closesqua, peek_next_type(*p));
+        p->current++;
+        return new_ast((node_t){
+            ast_subscript, {.ast_subscript = {.array = expr, .subscript = subscript}}});
+    }
+    else if (peek_next_type(*p) == op_decr || peek_next_type(*p) == op_incr)
+    {
+        // We have postfix [inc/dec]rementation
+        token_t post_op = parse_unary_operator(p);
+        return new_ast((node_t){
+            ast_unary_op, {.ast_unary_op = {.t = post_op, .operand = expr, .postfix = 1}}});
+    }
+    return expr;
+}
+
+ast_t parse_prefix_expression(parser_t *p)
+{
+    // production rule:
+    // <prefix expression> ::= <postfix expression>
+    //                       | <prefix operator> <prefix expression>
+    if (is_prefix_operator(peek_next_type(*p)))
+    {
+        token_t pref_op = parse_unary_operator(p);
+        ast_t expr = parse_prefix_expression(p);
+        return new_ast((node_t){
+            ast_unary_op, {.ast_unary_op = {.t = pref_op, .operand = expr, .postfix = 0}}});
+    }
+    return parse_postfix_expression(p);
+}
+
+ast_t parse_mult_expression(parser_t *p)
+{
+    // production rule:
+    // <mult expression> ::= <prefix operation> | <prefix operation> <mult operator> <mult expression>
 
     // First we parse a factor
-    ast_t lhs = parse_factor(p);
+    ast_t lhs = parse_prefix_expression(p);
     // check if next is multiplication
     if (!is_mul_op(peek_next_type(*p)))
         return lhs;
 
     token_t operator= parse_operator(p);
-    ast_t rhs = parse_factor(p);
+    ast_t rhs = parse_mult_expression(p);
     return new_ast((node_t){
             ast_bin_op, {.ast_bin_op = {.l = lhs, .r = rhs, .t = operator }}});
 }
@@ -544,9 +664,9 @@ token_t parse_additive_operator(parser_t *p)
 ast_t parse_add_expression(parser_t *p)
 {
     // production rule:
-    // <add expr> ::= <term> | <term> <add operator> < add expression>
-    // First we parse a term
-    ast_t lhs = parse_term(p);
+    // <add expr> ::= <mult_expression> | <mult_expression> <add operator> < add expression>
+    // First we parse a mult_expression
+    ast_t lhs = parse_mult_expression(p);
     // First production rule or 2nd one ?
     if (is_add_op(peek_next_type(*p)))
     {
@@ -565,7 +685,6 @@ ast_t parse_expression(parser_t *p)
     // production rules
     // <expression> ::= <var assignment>
     //                | <var declaration>
-    //                | <function call>
     //                | <add expr>
     //                | ...
 
@@ -575,8 +694,8 @@ ast_t parse_expression(parser_t *p)
     if (peek_next_type(*p) == key_auto)
         return parse_var_declaration(p);
     // Trying to see if we have a function call
-    if (peek_next_type(*p) == tok_iden && peek_type(*p, 1) == del_openparen)
-        return parse_function_call(p);
+    // if (peek_next_type(*p) == tok_iden && peek_type(*p, 1) == del_openparen)
+    //     return parse_function_call(p);
     if (peek_next_type(*p) == del_semicol)
         return NULL;
     // Must be a binary expression

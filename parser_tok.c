@@ -5,7 +5,9 @@ void parser_tok_name(parser_token_t t)
 {
     switch (t)
     {
-
+    case tok_type:
+        printf("tok_type");
+        break;
     case key_auto:
         printf("key_auto");
         break;
@@ -208,9 +210,9 @@ int is_right_asso(parser_token_t t)
 
 parser_token_t get_type(token_t t)
 {
+
     if (t.lexeme == NULL)
         return err_tok;
-
     switch (t.type)
     {
     case TYPE:
@@ -247,6 +249,10 @@ parser_token_t get_type(token_t t)
             return del_semicol;
         case ',':
             return del_comma;
+        case '[':
+            return del_opensqua;
+        case ']':
+            return del_closesqua;
         default:
             return err_tok;
         }
@@ -305,6 +311,10 @@ parser_token_t get_type(token_t t)
         {
             if (strcmp(t.lexeme, "==") == 0)
                 return op_eq;
+            if (strcmp(t.lexeme, "++") == 0)
+                return op_incr;
+            if (strcmp(t.lexeme, "--") == 0)
+                return op_decr;
             if (strcmp(t.lexeme, "&&") == 0)
                 return op_and;
             if (strcmp(t.lexeme, "||") == 0)

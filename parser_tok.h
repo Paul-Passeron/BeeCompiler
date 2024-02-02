@@ -34,11 +34,15 @@ typedef enum
     op_bit_and,
     op_bit_or,
     op_bit_xor,
+    op_bit_not,
+
     // delimeters
     del_openbra,
     del_closebra,
     del_openparen,
     del_closeparen,
+    del_opensqua,
+    del_closesqua,
     del_semicol,
     del_comma,
 

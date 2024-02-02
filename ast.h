@@ -27,6 +27,8 @@ struct node_t
         ast_funccallargs,
         ast_scope,
         ast_auto,
+        ast_fundef_arg,
+        ast_subscript,
         // ast_tmp_expr,
     } tag;
     union
@@ -62,6 +64,7 @@ struct node_t
         struct ast_function_def
         {
             token_t t;
+            type_t *return_type;
             node_t **args;
             int arity;
             int capacity;
@@ -70,7 +73,7 @@ struct node_t
 
         struct ast_function_call
         {
-            token_t t;
+            node_t *called;
             node_t **args;
             int arity;
             int capacity;
@@ -96,6 +99,7 @@ struct node_t
         {
             token_t t;
             node_t *operand;
+            int postfix;
         } ast_unary_op;
 
         struct ast_expression
@@ -135,6 +139,18 @@ struct node_t
             node_t *rhs;
             type_t *type;
         } ast_auto;
+
+        struct ast_fundef_arg
+        {
+            node_t *arg;
+            type_t *type;
+        } ast_fundef_arg;
+
+        struct ast_subscript
+        {
+            node_t *subscript;
+            node_t *array;
+        } ast_subscript;
 
         // struct ast_tmp_expr
         // {
