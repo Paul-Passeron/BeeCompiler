@@ -1,4 +1,4 @@
-void printn(i64 a, i8 b)
+void printn(i64 n, i8 b)
 {
     auto i64 a = n / b;
     if (a)

@@ -221,6 +221,16 @@ error_reporter_t create_error_l(lexer_t l, err_type_t t, error_t error)
     err.error = error;
     return err;
 }
+
+int end_comm(char *s)
+{
+    char buf[3];
+    buf[0] = *s;
+    buf[1] = s[1];
+    buf[2] = 0;
+    return strcmp("*/", buf) == 0;
+}
+
 void step_lexer(lexer_t *l)
 {
 
@@ -240,6 +250,16 @@ void step_lexer(lexer_t *l)
 
     if (!*l->remaining)
         return;
+    if (*l->remaining == '/')
+    {
+        if (*(l->remaining + 1) == '*')
+        {
+            l->remaining++;
+            while (!end_comm(l->remaining))
+                l->remaining++;
+            l->remaining += 2;
+        }
+    }
     // string lit
     if (*l->remaining == '\"')
     {
