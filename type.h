@@ -20,6 +20,7 @@ typedef enum
     type_char_t,
     type_pointer_t,
     type_void,
+    type_float,
     type_error,
 } type_type_t;
 

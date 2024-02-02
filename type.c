@@ -34,6 +34,9 @@ type_type_t regular_type_type_from_lexeme(char *s)
 
     if (strcmp(s, "void") == 0)
         return type_void;
+
+    if (strcmp(s, "float") == 0)
+        return type_float;
     return type_error;
 }
 
@@ -74,6 +77,8 @@ size_t size_of_type(type_t t)
         return 1;
     case type_void:
         return 0;
+    case type_float:
+        return 4;
     case type_pointer_t:
         return POINTER_SIZE;
     default:
@@ -121,6 +126,9 @@ void print_reg_type(type_type_t t)
         break;
     case type_void:
         printf("type_void");
+        break;
+    case type_float:
+        printf("type_float");
         break;
     }
 }

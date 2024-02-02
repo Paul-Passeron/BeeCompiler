@@ -76,8 +76,7 @@ int main(int argc, char **argv)
     if (use_fasm)
     {
         generator_t g = create_generator(ast, output);
-        print_entry(g);
-        print_exit(g, 54);
+        generate_program(g);
         destroy_generator(g);
     }
     // free_ast(ast);

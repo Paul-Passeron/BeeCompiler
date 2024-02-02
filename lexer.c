@@ -113,7 +113,7 @@ int is_keyword(char *s)
 
 int is_type(char *s)
 {
-    char *type[] = {"i64", "i32", "i16", "i8", "u64", "u32", "u16", "u8", "char", "pointer", "void"};
+    char *type[] = {"i64", "i32", "i16", "i8", "u64", "u32", "u16", "u8", "char", "pointer", "void", "float"};
     int n_k = sizeof(type) / sizeof(char *);
     for (int i = 0; i < n_k; i++)
     {
@@ -258,6 +258,12 @@ void step_lexer(lexer_t *l)
             while (!end_comm(l->remaining))
                 l->remaining++;
             l->remaining += 2;
+        }
+        else if (*(l->remaining + 1) == '/')
+        {
+            l->remaining++;
+            while (*(l->remaining++) != '\n')
+                ;
         }
     }
     // string lit

@@ -12,3 +12,8 @@ i64 main(i64 argc, char **argv)
         printn(i, 10);
     return 0;
 }
+
+i64 div_by_10(float a)
+{
+    return a / 10;
+}
