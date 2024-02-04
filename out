@@ -2,15 +2,22 @@ format ELF64 executable 3
 segment readable executable
 entry start
 start:
+    push 154
+    lea rax, rsp
+    
+    push 15
+
     call FUNCTION_main
+    sub rsp, 2
+    mov rdi, rax
     mov rax, 60
-    mov rdi, 0
     syscall
 
-FUNCTION_func:
+FUNCTION_main:
     push rbp
     mov rbp, rsp
    ; Function code here
+    mov rax, [rbp + 16]
     pop rbp
     ret
 

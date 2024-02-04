@@ -1,1 +1,4 @@
-void func(char arg1, char arg2, char arg3) {}
+void main(char c)
+{
+    return c;
+}
