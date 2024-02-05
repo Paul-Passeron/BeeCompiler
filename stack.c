@@ -52,10 +52,21 @@ stack_val_t stack_peek(stack_t *s)
 {
     if (s->length == 0)
     {
-        printf("Cannot peek empty stack\n");
-        exit(2);
+        return (stack_val_t){0};
     }
     return s->data[s->length - 1];
+}
+
+int get_last_scope(stack_t s)
+{
+    return stack_peek(&s).scope_index;
+}
+void get_rid_of_last_scope(stack_t *s, int scope)
+{
+    if (s->length == 0)
+        return;
+    while (get_last_scope(*s) > scope && s->length > 0)
+        (void)stack_pop(s);
 }
 
 scope_elem_t get_scope_elem(char *identifier, stack_t s, int *found)

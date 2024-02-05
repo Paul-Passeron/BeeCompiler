@@ -1,35 +1,25 @@
 i64 main()
 {
-    if (1)
-    {
-        putchar('a');
-    }
-    else
-    {
-        putchar('b');
-    }
+    putnumb(256);
     return 0;
 }
 
-void put_num_char(char i)
+i64 fact(i64 n)
 {
-    putchar(i + '0');
+    if (n)
+        return n * fact(n - 1);
+    return 1;
 }
 
-void print_hello_world()
+void putdig(char n)
 {
-    putchar('H');
-    putchar('e');
-    putchar('l');
-    putchar('l');
-    putchar('o');
-    putchar(',');
-    putchar(' ');
-    putchar('W');
-    putchar('o');
-    putchar('r');
-    putchar('l');
-    putchar('d');
-    putchar('!');
-    putchar('\n');
+    putchar(n + '0');
+}
+
+void putnumb(i64 n)
+{
+    auto i64 a = n / 10;
+    if (a)
+        putnumb(a, 0);
+    putdig(n % 10);
 }

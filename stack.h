@@ -8,6 +8,7 @@ typedef struct
     char *identifier;
     int n_bytes;
     int scope_index;
+    int is_arg;
 
 } scope_elem_t;
 
@@ -32,4 +33,5 @@ stack_val_t stack_peek(stack_t *s);
 scope_elem_t get_scope_elem(char *identifier, stack_t s, int *found);
 
 void print_stack(stack_t s);
+void get_rid_of_last_scope(stack_t *s, int scope);
 #endif // STACK_H

@@ -3,6 +3,8 @@
 #include <string.h>
 #include "fundef_table.h"
 
+int label = 0;
+int scope = 0;
 generator_t create_generator(ast_t a, char *filename)
 {
     FILE *f = fopen(filename, "wb");
@@ -11,8 +13,8 @@ generator_t create_generator(ast_t a, char *filename)
         perror("Could not open file: ");
         exit(1);
     }
-    stack_t s;
-    stack_create(&s);
+    stack_t *s = malloc(sizeof(stack_t));
+    stack_create(s);
 
     // adding putchar as a preloaded function for the moment
     fundef_t putchar_fundef = fundef_create();
@@ -32,7 +34,7 @@ generator_t create_generator(ast_t a, char *filename)
 void destroy_generator(generator_t g)
 {
     fclose(g.out);
-    stack_free(&g.scope);
+    stack_free(g.scope);
 }
 
 void print_entry(generator_t g)
@@ -71,20 +73,25 @@ void print_function_intro(generator_t g, char *function_name)
     fprintf(f, "FUNCTION_%s:\n", function_name);
     fprintf(f, "    push rbp\n");
     fprintf(f, "    mov rbp, rsp\n");
+    fprintf(f, "    sub rsp, 64\n");
 }
 
 void print_function_outro(generator_t g)
 {
     FILE *f = g.out;
+    fprintf(f, "    add rsp, 64\n");
     fprintf(f, "    pop rbp\n");
     fprintf(f, "    ret\n");
 }
 
 int generate_label(generator_t g)
 {
-    FILE *f = g.out;
-    fprintf(f, "label_%d:\n", label++);
-    return label - 1;
+    // FILE *f = g.out;
+    (void)g;
+    label++;
+    // fprintf(f, "label_%d:\n", label++);
+    return label -
+           1;
 }
 
 void generate_expression(generator_t g, ast_t expression)
@@ -96,16 +103,19 @@ void generate_expression(generator_t g, ast_t expression)
     {
         token_t t = expression->data.ast_identifier.t;
         int found;
-        stack_val_t e = get_scope_elem(t.lexeme, g.scope, &found);
+        stack_val_t e = get_scope_elem(t.lexeme, *g.scope, &found);
         if (!found)
         {
-            printf("Identifier not found !\n");
+            printf("Identifier not found :'%s'!\n", t.lexeme);
             exit(1);
         }
         else
         {
             // maybe will have to put specifier, e.g byte, word, byte ptr...
-            fprintf(f, "    mov rax, [rbp + %d]\n ", e.address);
+            char c = '+';
+            if (!e.is_arg)
+                c = '-';
+            fprintf(f, "    mov rax, [rbp %c %d]\n ", c, e.address);
         }
     }
     else if (expression->tag == ast_literal)
@@ -133,9 +143,89 @@ void generate_expression(generator_t g, ast_t expression)
 
         if (get_type(data.t) == op_plus)
             fprintf(f, "    add rax, rbx\n");
+        if (get_type(data.t) == op_minus)
+        {
+            fprintf(f, "    sub rbx, rax\n");
+            fprintf(f, "    mov rax, rbx\n");
+        }
         else if (get_type(data.t) == op_mult)
             fprintf(f, "    mul rbx\n");
+        else if (get_type(data.t) == op_div)
+        {
+            fprintf(f, "    mov rcx, rax\n");
+            fprintf(f, "    mov rax, rbx\n");
+            fprintf(f, "    mov rbx, rcx\n");
+            fprintf(f, "    cdq\n");
+            fprintf(f, "    mov rdx, 0\n");
+            fprintf(f, "    div rbx\n");
+        }
+        else if (get_type(data.t) == op_mod)
+        {
+            fprintf(f, "    mov rdx, 0\n");
+            fprintf(f, "    mov rcx, rax\n");
+            fprintf(f, "    mov rax, rbx\n");
+            fprintf(f, "    mov rbx, rcx\n");
+            fprintf(f, "    cdq\n");
+            fprintf(f, "    div rbx\n");
+            fprintf(f, "    mov rax, rdx\n");
+        }
     }
+}
+
+void generate_simple_assignment(generator_t g, char *name, ast_t rhs)
+{
+    FILE *f = g.out;
+    int found = 0;
+    scope_elem_t var = get_scope_elem(name, *g.scope, &found);
+    if (!found)
+    {
+        printf("Identifier '%s' not found.\n", name);
+        exit(1);
+    }
+    generate_expression(g, rhs);
+    fprintf(f, "    mov rbx, rbp\n");
+    fprintf(f, "    add rbx, %d\n", var.address);
+    fprintf(f, "    mov [rbx], rax\n");
+}
+
+void generate_variable_declaration(generator_t g, ast_t decl)
+{
+    // FILE *f = g.out;
+
+    struct ast_auto data = decl->data.ast_auto;
+    char *name = data.t.lexeme;
+    int size = size_of_type(*data.type);
+    scope_elem_t var;
+    var.address = 16;
+
+    if (g.scope->length > 0)
+    {
+        scope_elem_t last_var = g.scope->data[g.scope->length - 1];
+        var.address = last_var.address + last_var.n_bytes;
+    }
+    var.n_bytes = size;
+    var.identifier = name;
+    var.scope_index = scope;
+
+    stack_push(g.scope, var);
+    // printf("Pushed !\n");
+
+    if (data.rhs != NULL)
+    {
+        // Rhs now
+        // generate_expression(g, data.rhs);
+        // fprintf(f, "    mov rbx, rbp\n");
+        // fprintf(f, "    add rbx, %d\n", var.address);
+        // fprintf(f, "    mov [rbx], rax\n");
+        generate_simple_assignment(g, name, data.rhs);
+    }
+}
+
+void generate_general_assignment(generator_t g, ast_t assign)
+{
+    struct ast_assignment data = assign->data.ast_assignment;
+    // Temporary solution
+    generate_simple_assignment(g, data.t.lexeme, data.rhs);
 }
 
 void generate_return(generator_t g, ast_t ret_stmt)
@@ -147,30 +237,66 @@ void generate_return(generator_t g, ast_t ret_stmt)
 
 void generate_if_else_statement(generator_t g, ast_t stmt)
 {
+    FILE *f = g.out;
     struct ast_if_stat data = stmt->data.ast_if_stat;
-    int test_cond = generate_label(g);
+    // int test_cond = generate_label(g);
+    int else_body = generate_label(g);
+    int end_body = generate_label(g);
+    // fprintf(f, "label_%d:\n", test_cond);
     generate_expression(g, data.cond);
-    int begin_body = generate_label(g);
-    generate_scope(g, data.body);
+    fprintf(f, "    cmp rax, 0\n");
+    fprintf(f, "    je label_%d\n", else_body);
+    generate_statement(g, data.body);
+    fprintf(f, "    jmp label_%d\n", end_body);
+    fprintf(f, "label_%d:\n", else_body);
+    if (data.other != NULL)
+        generate_statement(g, data.other);
+    fprintf(f, "label_%d:\n", end_body);
+}
+
+void generate_while_statement(generator_t g, ast_t stmt)
+{
+    FILE *f = g.out;
+    struct ast_while_loop data = stmt->data.ast_while_loop;
+    int test_cond = generate_label(g);
+    int end_body = generate_label(g);
+    fprintf(f, "label_%d:\n", test_cond);
+    generate_expression(g, data.cond);
+    fprintf(f, "    cmp rax, 0\n");
+    fprintf(f, "    je label_%d\n", end_body);
+    generate_statement(g, data.body);
+    fprintf(f, "    jmp label_%d\n", test_cond);
+
+    fprintf(f, "label_%d:\n", end_body);
 }
 
 void generate_statement(generator_t g, ast_t stmt)
 {
     if (stmt->tag == ast_return)
-    {
         generate_return(g, stmt);
-    }
-    if (stmt->tag == ast_function_call)
+    else if (stmt->tag == ast_function_call)
         generate_function_call(g, stmt);
+    else if (stmt->tag == ast_if_stat)
+        generate_if_else_statement(g, stmt);
+    else if (stmt->tag == ast_while_loop)
+        generate_while_statement(g, stmt);
+    else if (stmt->tag == ast_auto)
+        generate_variable_declaration(g, stmt);
+    else if (stmt->tag == ast_scope)
+        generate_scope(g, stmt);
+    else if (stmt->tag == ast_assignment)
+        generate_general_assignment(g, stmt);
 }
 
-void generate_scope(generator_t g, ast_t scope)
+void generate_scope(generator_t g, ast_t scope_tree)
 {
-    struct ast_scope data = scope->data.ast_scope;
+    int prev_scope = scope;
+    scope++;
+    struct ast_scope data = scope_tree->data.ast_scope;
     for (int i = 0; i < data.length; i++)
-    {
         generate_statement(g, data.statements[i]);
-    }
+    get_rid_of_last_scope(g.scope, prev_scope);
+    scope = prev_scope;
 }
 
 void generate_function_call(generator_t g, ast_t funcall)
@@ -203,7 +329,7 @@ void generate_function_def(generator_t g, ast_t fun)
 
     // Pushing function arguments on the generator scope
     int offset = 16;
-    int init_length = g.scope.length;
+    int init_length = g.scope->length;
 
     for (int i = 0; i < fundef.arity; i++)
     {
@@ -219,16 +345,17 @@ void generate_function_def(generator_t g, ast_t fun)
         offset += size;
         var.identifier = name;
         var.scope_index = i;
-        stack_push(&g.scope, var);
+        var.is_arg = 1;
+        stack_push(g.scope, var);
     }
 
     fprintf(f, "    ; Function code here\n");
     generate_scope(g, fundef.body);
     print_function_outro(g);
     fprintf(f, "\n");
-    print_stack(g.scope);
-    while (g.scope.length > init_length)
-        (void)stack_pop(&g.scope);
+    print_stack(*g.scope);
+    while (g.scope->length > init_length)
+        (void)stack_pop(g.scope);
 }
 
 void generate_program(generator_t g)

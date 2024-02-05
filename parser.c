@@ -276,6 +276,7 @@ ast_t parse_while_loop(parser_t *p)
     ast_t condition = parse_expression(p);
     // We expect a closed parenthesis
     expect(del_closeparen, peek_next_type(*p));
+    p->current++;
     // We parse the body of the while loop
     ast_t while_body = parse_statement(p);
     return new_ast((node_t){
@@ -527,36 +528,6 @@ token_t parse_unary_operator(parser_t *p)
     return res;
 }
 
-// ast_t parse_function_call(parser_t *p)
-// {
-//     // production rule:
-//     // <function call> ::= <identifier>(<argument list>) | <identifier>()
-//     // We expect an identifier
-//     expect(tok_iden, peek_next_type(*p));
-//     token_t function = peek_next_token(*p);
-//     p->current++;
-//     // We expect an open parenthesis
-//     expect(del_openparen, peek_next_type(*p));
-//     p->current++;
-//     // We check whether or not there are arguments
-//     ast_t *args = NULL;
-//     int arity = 0;
-//     int capacity = 0;
-
-//     if (peek_next_type(*p) != del_closeparen)
-//     {
-//         // Function call with at least 1 argument
-//         ast_t arg_list = parse_argument_list(p);
-//         args = arg_list->data.ast_funccallargs.args;
-//         arity = arg_list->data.ast_funccallargs.length;
-//         capacity = arg_list->data.ast_funccallargs.capacity;
-//     }
-//     // skip the closed parenthesis
-//     p->current++;
-//     return new_ast((node_t){
-//         ast_function_call, {.ast_function_call = {.args = args, .arity = arity, .capacity = capacity, .t = function}}});
-// }
-
 ast_t parse_postfix_expression(parser_t *p)
 {
     // production rule:
@@ -712,6 +683,7 @@ ast_t parse_statement(parser_t *p)
     //               | <return statement>
     //               | <expression>;
     parser_token_t t = peek_next_type(*p);
+    printf("t.lexeme: %d\n", t);
     if (t == del_openbra)
         return parse_compound_statement(p);
     if (t == key_if)
