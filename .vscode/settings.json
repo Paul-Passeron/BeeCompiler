@@ -1,11 +1,14 @@
 {
     "files.associations": {
         "*.b": "c",
+        "*.fasm": "fasm",
         "stdlib.h": "c",
         "common.h": "c",
         "error.h": "c",
         "stdio.h": "c",
-        "type.h": "c"
+        "type.h": "c",
+        "fundef_table.h": "c",
+        "generator.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled",
     "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [

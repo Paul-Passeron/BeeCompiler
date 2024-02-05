@@ -17,8 +17,10 @@ common.o: common.h
 error.o: error.h
 generator.o: generator.h ast.h parser_tok.h
 type.o: type.h
+fundef_table.o:	fundef_table.h ast.h type.h
 
-bee: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o parser_tok.o generator.o type.o
+bee: main.o stack.o lexer.o token.o parser.o ast.o error.o common.o parser_tok.o generator.o type.o fundef_table.o
+
 
 	$(CC) $(CFLAGS) -o $@ $^
 

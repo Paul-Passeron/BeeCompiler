@@ -1,5 +1,7 @@
 #include "generator.h"
 #include <stdlib.h>
+#include <string.h>
+#include "fundef_table.h"
 
 generator_t create_generator(ast_t a, char *filename)
 {
@@ -12,10 +14,19 @@ generator_t create_generator(ast_t a, char *filename)
     stack_t s;
     stack_create(&s);
 
-    return (generator_t){
+    // adding putchar as a preloaded function for the moment
+    fundef_t putchar_fundef = fundef_create();
+    putchar_fundef.args_types[0] = (type_t){.type = type_char_t, .t = NULL};
+    putchar_fundef.arity = 1;
+    putchar_fundef.ret_type = (type_t){.type = type_void, .t = NULL};
+    generator_t g = {
         .ast = a,
         .scope = s,
         .out = f};
+    fundef_table_create(&g.table);
+    fundef_table_append(&g.table, putchar_fundef, "putchar");
+    load_functions(&g.table, a);
+    return g;
 }
 
 void destroy_generator(generator_t g)
@@ -30,9 +41,18 @@ void print_entry(generator_t g)
     fprintf(f, "format ELF64 executable 3\n");
     fprintf(f, "segment readable executable\n");
     fprintf(f, "entry start\n");
+    fprintf(f, "FUNCTION_putchar:\n");
+    fprintf(f, "    push rbp\n");
+    fprintf(f, "    mov rbp, rsp\n");
+    fprintf(f, "    mov rax, 1\n");
+    fprintf(f, "    mov rdi, 1\n");
+    fprintf(f, "    mov rsi, rbp\n");
+    fprintf(f, "    add rsi, 16\n");
+    fprintf(f, "    mov rdx, 1\n");
+    fprintf(f, "    syscall\n");
+    fprintf(f, "    pop rbp\n");
+    fprintf(f, "    ret\n");
     fprintf(f, "start:\n");
-    fprintf(f, "    mov rbx, 8\n");
-    fprintf(f, "    push rbx\n");
     fprintf(f, "    call FUNCTION_main\n");
 }
 
@@ -60,8 +80,17 @@ void print_function_outro(generator_t g)
     fprintf(f, "    ret\n");
 }
 
+int generate_label(generator_t g)
+{
+    FILE *f = g.out;
+    fprintf(f, "label_%d:\n", label++);
+    return label - 1;
+}
+
 void generate_expression(generator_t g, ast_t expression)
 {
+    FILE *f = g.out;
+
     // move the result in rax
     if (expression->tag == ast_identifier)
     {
@@ -75,20 +104,37 @@ void generate_expression(generator_t g, ast_t expression)
         }
         else
         {
-            FILE *f = g.out;
-            // maybe will have to put speciofer, e.g byte, word, byte ptr...
+            // maybe will have to put specifier, e.g byte, word, byte ptr...
             fprintf(f, "    mov rax, [rbp + %d]\n ", e.address);
         }
     }
     else if (expression->tag == ast_literal)
     {
         token_t t = expression->data.ast_literal.t;
-        if (t.type == NUM_LIT)
-        {
-            FILE *f = g.out;
+        if (strcmp(t.lexeme, "\'\\n\'") == 0)
+            fprintf(f, "    mov rax, 10\n");
+        else
+            fprintf(f, "    mov rax, %s\n", t.lexeme);
+    }
+    else if (expression->tag == ast_function_call)
+    {
+        printf("Yes\n");
+        generate_function_call(g, expression);
+    }
+    else if (expression->tag == ast_bin_op)
+    {
+        FILE *f = g.out;
+        struct ast_bin_op data = expression->data.ast_bin_op;
+        generate_expression(g, data.l);
+        fprintf(f, "    push rax\n");
+        // fprintf(f, "    mov rax, 0\n");
+        generate_expression(g, data.r);
+        fprintf(f, "    pop rbx\n");
 
-            fprintf(f, "   mov rax, %s\n", t.lexeme);
-        }
+        if (get_type(data.t) == op_plus)
+            fprintf(f, "    add rax, rbx\n");
+        else if (get_type(data.t) == op_mult)
+            fprintf(f, "    mul rbx\n");
     }
 }
 
@@ -96,6 +142,16 @@ void generate_return(generator_t g, ast_t ret_stmt)
 {
     struct ast_return data = ret_stmt->data.ast_return;
     generate_expression(g, data.expression);
+    print_function_outro(g);
+}
+
+void generate_if_else_statement(generator_t g, ast_t stmt)
+{
+    struct ast_if_stat data = stmt->data.ast_if_stat;
+    int test_cond = generate_label(g);
+    generate_expression(g, data.cond);
+    int begin_body = generate_label(g);
+    generate_scope(g, data.body);
 }
 
 void generate_statement(generator_t g, ast_t stmt)
@@ -104,6 +160,8 @@ void generate_statement(generator_t g, ast_t stmt)
     {
         generate_return(g, stmt);
     }
+    if (stmt->tag == ast_function_call)
+        generate_function_call(g, stmt);
 }
 
 void generate_scope(generator_t g, ast_t scope)
@@ -113,6 +171,25 @@ void generate_scope(generator_t g, ast_t scope)
     {
         generate_statement(g, data.statements[i]);
     }
+}
+
+void generate_function_call(generator_t g, ast_t funcall)
+{
+    FILE *f = g.out;
+    struct ast_function_call data = funcall->data.ast_function_call;
+    char *name = data.called->data.ast_identifier.t.lexeme;
+    fundef_t fun = find_fundef(g.table, name);
+    int size = fundef_arg_size(fun);
+    for (int i = data.arity - 1; i >= 0; i--)
+    {
+        ast_t expr = data.args[i];
+        generate_expression(g, expr);
+        // for the moment can only work on functions of which called is an identifier present in the table
+        // We have to lookup here the number of bytes of the argument
+        print_push_on_stack(g, (int)size_of_type(fun.args_types[i]));
+    }
+    fprintf(f, "    call FUNCTION_%s\n", name);
+    fprintf(f, "    add rsp, %d\n", size);
 }
 
 void generate_function_def(generator_t g, ast_t fun)
@@ -145,7 +222,7 @@ void generate_function_def(generator_t g, ast_t fun)
         stack_push(&g.scope, var);
     }
 
-    fprintf(f, "   ; Function code here\n");
+    fprintf(f, "    ; Function code here\n");
     generate_scope(g, fundef.body);
     print_function_outro(g);
     fprintf(f, "\n");
@@ -158,8 +235,6 @@ void generate_program(generator_t g)
 {
     FILE *f = g.out;
     print_entry(g);
-    fprintf(f, "    add rsp, 8\n");
-
     print_exit(g);
     fprintf(f, "\n");
 
@@ -170,7 +245,6 @@ void generate_program(generator_t g)
         if (block->tag == ast_function_def)
         {
             generate_function_def(g, block);
-
             fprintf(f, "\n");
         }
     }
