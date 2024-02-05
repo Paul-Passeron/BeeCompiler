@@ -127,10 +127,7 @@ void generate_expression(generator_t g, ast_t expression)
             fprintf(f, "    mov rax, %s\n", t.lexeme);
     }
     else if (expression->tag == ast_function_call)
-    {
-        printf("Yes\n");
         generate_function_call(g, expression);
-    }
     else if (expression->tag == ast_bin_op)
     {
         FILE *f = g.out;
@@ -353,7 +350,7 @@ void generate_function_def(generator_t g, ast_t fun)
     generate_scope(g, fundef.body);
     print_function_outro(g);
     fprintf(f, "\n");
-    print_stack(*g.scope);
+    // print_stack(*g.scope);
     while (g.scope->length > init_length)
         (void)stack_pop(g.scope);
 }

@@ -23,11 +23,47 @@ FUNCTION_main:
     mov rbp, rsp
     sub rsp, 64
     ; Function code here
-    mov rax, 256
+    mov rax, 0
+    mov rbx, rbp
+    add rbx, 16
+    mov [rbx], rax
+    mov rax, 15
+    mov rbx, rbp
+    add rbx, 24
+    mov [rbx], rax
+label_0:
+    mov rax, [rbp + 24]
+     push rax
+    mov rax, [rbp + 16]
+     pop rbx
+    sub rbx, rax
+    mov rax, rbx
+    cmp rax, 0
+    je label_1
+    mov rax, [rbp + 16]
+     push rax
+    mov rax, 1
+    pop rbx
+    add rax, rbx
+    mov rbx, rbp
+    add rbx, 16
+    mov [rbx], rax
+    mov rax, [rbp + 16]
+     sub rsp, 8
+    mov [rsp], rax
+    call FUNCTION_fib
+    add rsp, 8
     sub rsp, 8
     mov [rsp], rax
-    call FUNCTION_putnumb
+    call FUNCTION_printn
     add rsp, 8
+    mov rax, 10
+    sub rsp, 1
+    mov [rsp], byte al
+    call FUNCTION_putchar
+    add rsp, 1
+    jmp label_0
+label_1:
     mov rax, 0
     add rsp, 64
     pop rbp
@@ -44,7 +80,7 @@ FUNCTION_fact:
     ; Function code here
     mov rax, [rbp + 16]
      cmp rax, 0
-    je label_0
+    je label_2
     mov rax, [rbp + 16]
      push rax
     mov rax, [rbp + 16]
@@ -62,9 +98,9 @@ FUNCTION_fact:
     add rsp, 64
     pop rbp
     ret
-    jmp label_1
-label_0:
-label_1:
+    jmp label_3
+label_2:
+label_3:
     mov rax, 1
     add rsp, 64
     pop rbp
@@ -74,26 +110,68 @@ label_1:
     ret
 
 
-FUNCTION_putdig:
+FUNCTION_fib:
     push rbp
     mov rbp, rsp
     sub rsp, 64
     ; Function code here
     mov rax, [rbp + 16]
+     cmp rax, 0
+    je label_4
+    jmp label_5
+label_4:
+    mov rax, 1
+    add rsp, 64
+    pop rbp
+    ret
+label_5:
+    mov rax, [rbp + 16]
      push rax
-    mov rax, '0'
+    mov rax, 1
+    pop rbx
+    sub rbx, rax
+    mov rax, rbx
+    cmp rax, 0
+    je label_6
+    mov rax, [rbp + 16]
+     push rax
+    mov rax, 1
+    pop rbx
+    sub rbx, rax
+    mov rax, rbx
+    sub rsp, 8
+    mov [rsp], rax
+    call FUNCTION_fib
+    add rsp, 8
+    push rax
+    mov rax, [rbp + 16]
+     push rax
+    mov rax, 2
+    pop rbx
+    sub rbx, rax
+    mov rax, rbx
+    sub rsp, 8
+    mov [rsp], rax
+    call FUNCTION_fib
+    add rsp, 8
     pop rbx
     add rax, rbx
-    sub rsp, 1
-    mov [rsp], byte al
-    call FUNCTION_putchar
-    add rsp, 1
+    add rsp, 64
+    pop rbp
+    ret
+    jmp label_7
+label_6:
+label_7:
+    mov rax, 1
+    add rsp, 64
+    pop rbp
+    ret
     add rsp, 64
     pop rbp
     ret
 
 
-FUNCTION_putnumb:
+FUNCTION_printn:
     push rbp
     mov rbp, rsp
     sub rsp, 64
@@ -108,23 +186,25 @@ FUNCTION_putnumb:
     cdq
     mov rdx, 0
     div rbx
-    mov rbx, rbp
-    add rbx, 24
-    mov [rbx], rax
-    mov rax, [rbp + 24]
-     cmp rax, 0
-    je label_2
-    mov rax, 0
+    cmp rax, 0
+    je label_8
+    mov rax, [rbp + 16]
+     push rax
+    mov rax, 10
+    pop rbx
+    mov rcx, rax
+    mov rax, rbx
+    mov rbx, rcx
+    cdq
+    mov rdx, 0
+    div rbx
     sub rsp, 8
     mov [rsp], rax
-    mov rax, [rbp + 24]
-     sub rsp, 8
-    mov [rsp], rax
-    call FUNCTION_putnumb
+    call FUNCTION_printn
     add rsp, 8
-    jmp label_3
-label_2:
-label_3:
+    jmp label_9
+label_8:
+label_9:
     mov rax, [rbp + 16]
      push rax
     mov rax, 10
@@ -136,9 +216,13 @@ label_3:
     cdq
     div rbx
     mov rax, rdx
+    push rax
+    mov rax, '0'
+    pop rbx
+    add rax, rbx
     sub rsp, 1
     mov [rsp], byte al
-    call FUNCTION_putdig
+    call FUNCTION_putchar
     add rsp, 1
     add rsp, 64
     pop rbp

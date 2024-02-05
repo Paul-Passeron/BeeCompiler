@@ -1,25 +1,39 @@
-i64 main()
+i8 main()
 {
-    putnumb(256);
+    auto i64 a = 0;
+    auto i64 max = 15;
+    while (max - a)
+    {
+        a = a + 1;
+        printn(fib(a));
+        putchar('\n');
+    }
+
     return 0;
 }
 
-i64 fact(i64 n)
+void fact(i64 n)
 {
     if (n)
         return n * fact(n - 1);
     return 1;
 }
 
-void putdig(char n)
+void fib(i64 n)
 {
-    putchar(n + '0');
+    if (n)
+    {
+    }
+    else
+        return 1;
+    if (n - 1)
+        return fib(n - 1) + fib(n - 2);
+    return 1;
 }
 
-void putnumb(i64 n)
+void printn(i64 a)
 {
-    auto i64 a = n / 10;
-    if (a)
-        putnumb(a, 0);
-    putdig(n % 10);
+    if (a / 10)
+        printn(a / 10);
+    putchar(a % 10 + '0');
 }

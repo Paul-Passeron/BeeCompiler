@@ -683,7 +683,6 @@ ast_t parse_statement(parser_t *p)
     //               | <return statement>
     //               | <expression>;
     parser_token_t t = peek_next_type(*p);
-    printf("t.lexeme: %d\n", t);
     if (t == del_openbra)
         return parse_compound_statement(p);
     if (t == key_if)
