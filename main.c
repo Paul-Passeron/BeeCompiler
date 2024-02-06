@@ -14,12 +14,12 @@ void usage(char *name)
 
 int main(int argc, char **argv)
 {
-    if (argc < 3)
+    if (argc < 2)
     {
         usage(argv[0]);
         exit(1);
     }
-
+    char default_output[] = "a";
     char *input = NULL;
     char *output = NULL;
     int print_tree = 0;
@@ -55,10 +55,7 @@ int main(int argc, char **argv)
     }
 
     if (output == NULL)
-    {
-        printf("You should input an output filename\n");
-        exit(1);
-    }
+        output = default_output;
 
     lexer_t lexer;
     parser_t parser;

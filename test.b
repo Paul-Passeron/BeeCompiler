@@ -1,13 +1,15 @@
 i8 main()
 {
     auto i64 a = 0;
-    auto i64 max = 15;
+    auto i64 max = 12;
     while (max - a)
     {
+        printn(fact(a));
+        putchar(',');
+        putchar(' ');
         a = a + 1;
-        printn(fib(a));
-        putchar('\n');
     }
+    putchar('\n');
 
     return 0;
 }
@@ -15,7 +17,10 @@ i8 main()
 void fact(i64 n)
 {
     if (n)
-        return n * fact(n - 1);
+    {
+        auto i64 a = n;
+        return a * fact(a - 1);
+    }
     return 1;
 }
 

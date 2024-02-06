@@ -203,7 +203,7 @@ void generate_variable_declaration(generator_t g, ast_t decl)
     var.n_bytes = size;
     var.identifier = name;
     var.scope_index = scope;
-
+    var.is_arg = 0;
     stack_push(g.scope, var);
     // printf("Pushed !\n");
 
