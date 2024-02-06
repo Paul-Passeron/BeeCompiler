@@ -32,20 +32,6 @@ parser_token_t peek_next_type(parser_t p)
     return peek_type(p, 0);
 }
 
-error_reporter_t create_error_p(parser_t p, err_type_t t, error_t err)
-{
-    error_reporter_t error;
-    token_t tok = peek_next_token(p);
-    error.col = tok.col;
-    error.line = tok.line;
-    error.abs_offset = tok.abs_offset;
-    error.filename = p.filename;
-    error.text = p.text;
-    error.t = t;
-    error.error = err;
-    return error;
-}
-
 void parser_create(parser_t *p, lexer_t l)
 {
 
@@ -77,22 +63,44 @@ int is_eof(parser_t p)
     return p.current >= p.tokens.length;
 }
 
-void expect(parser_token_t expect, parser_token_t got)
+int expect(parser_token_t expect, parser_token_t got)
 {
     if (expect != got)
     {
-        printf("Expected '");
-        parser_tok_name(expect);
-        printf("' token. Got: '");
-        parser_tok_name(got);
-        printf("'.\n");
-        exit(1);
+        // printf("Expected '");
+        // parser_tok_name(expect);
+        // printf("' token. Got: '");
+        // parser_tok_name(got);
+        // printf("'.\n");
+        // exit(1);
+        return 0;
     }
+    return 1;
+}
+error_reporter_t create_error_p(parser_t p, err_type_t t, error_t error)
+{
+    token_t tok = peek_next_token(p);
+
+    error_reporter_t err;
+    err.col = tok.col;
+    err.abs_offset = tok.abs_offset;
+    err.line = tok.line;
+    err.t = t;
+    err.text = p.text;
+    err.error = error;
+    err.filename = p.filename;
+    err.tok = tok;
+    return err;
 }
 
 type_t *parse_type(parser_t *p)
 {
-    expect(tok_type, peek_next_type(*p));
+    if (!expect(tok_type, peek_next_type(*p)))
+    {
+        error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, INVALID_TYPE);
+        print_syntax_error(err);
+        exit(1);
+    }
     type_t *res = regular_type_from_lexeme(peek_next_token(*p).lexeme);
     p->current++;
     while (peek_next_type(*p) == op_mult)
@@ -111,12 +119,22 @@ ast_t parse_var_declaration(parser_t *p)
     // We expect it to be auto (or maybe a type name in the future)
     // production rule:
     // <var declaration> ::= auto <type> <identifier>
-    expect(key_auto, peek_next_type(*p));
+
+    // We don't need this expect because it is called only when
+    // the auto keyword is found
+    // expect(key_auto, peek_next_type(*p));
     p->current++;
     type_t *type = parse_type(p);
 
     token_t variable = peek_next_token(*p);
-    expect(tok_iden, peek_next_type(*p));
+
+    if (!expect(tok_iden, peek_next_type(*p)))
+    {
+        // Invalid variable name
+        error_reporter_t err = create_error_p(*p, SYNTAX_ERROR, INVALID_VAR_NAME);
+        print_syntax_error(err);
+        exit(1);
+    }
     ast_t rhs = NULL;
     if (peek_type(*p, 1) == del_semicol)
         p->current++;

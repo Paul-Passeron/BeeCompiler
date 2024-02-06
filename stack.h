@@ -34,4 +34,6 @@ scope_elem_t get_scope_elem(char *identifier, stack_t s, int *found);
 
 void print_stack(stack_t s);
 void get_rid_of_last_scope(stack_t *s, int scope);
+
+int get_first_var_offset(stack_t s);
 #endif // STACK_H

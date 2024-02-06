@@ -1,6 +1,6 @@
 #ifndef ERROR_H
 #define ERROR_H
-
+#include "token.h"
 typedef enum
 {
     SYNTAX_ERROR
@@ -14,7 +14,8 @@ typedef enum
     INVALID_STRLIT,
     UNCLOSED_CHRLIT,
     INVALID_CHRLIT,
-
+    INVALID_TYPE,
+    INVALID_VAR_NAME,
     INVALID_FUNCALL,
     INVALID_FUNDEF,
 } error_t;
@@ -28,7 +29,7 @@ typedef struct
     int col;
     err_type_t t;
     error_t error;
-
+    token_t tok;
 } error_reporter_t;
 
 void print_error_preface(error_reporter_t r);

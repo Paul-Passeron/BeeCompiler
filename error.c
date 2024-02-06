@@ -46,6 +46,12 @@ void print_syntax_error(error_reporter_t r)
     case INVALID_FUNCALL:
         printf("Invalid function call: '\033[1;33m%.11s\033[00m...'\n", remaining);
         break;
+    case INVALID_TYPE:
+        printf("Invalid type: '\033[1;33m%.11s\033[00m...'\n", r.tok.lexeme);
+        break;
+    case INVALID_VAR_NAME:
+        printf("Invalid variable name: '\033[1;33m%.11s\033[00m...'\n", r.tok.lexeme);
+        break;
     default:
         printf("Uknown error !\n");
         break;

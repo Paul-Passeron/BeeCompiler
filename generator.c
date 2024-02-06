@@ -94,6 +94,29 @@ int generate_label(generator_t g)
            1;
 }
 
+void generate_address(generator_t g, char *iden)
+{
+    FILE *f = g.out;
+    int found;
+    stack_val_t e = get_scope_elem(iden, *g.scope, &found);
+    if (!found)
+    {
+        printf("Identifier not found :'%s'!\n", iden);
+        exit(1);
+    }
+    else
+    {
+        int addr = e.address; // maybe will have to put specifier, e.g byte, word, byte ptr...
+        char c = '+';
+        if (!e.is_arg)
+        {
+            c = '-';
+            addr = addr - get_first_var_offset(*g.scope) + e.n_bytes;
+        }
+        fprintf(f, "[rbp %c %d]", c, addr);
+    }
+}
+
 void generate_expression(generator_t g, ast_t expression)
 {
     FILE *f = g.out;
@@ -102,21 +125,27 @@ void generate_expression(generator_t g, ast_t expression)
     if (expression->tag == ast_identifier)
     {
         token_t t = expression->data.ast_identifier.t;
-        int found;
-        stack_val_t e = get_scope_elem(t.lexeme, *g.scope, &found);
-        if (!found)
-        {
-            printf("Identifier not found :'%s'!\n", t.lexeme);
-            exit(1);
-        }
-        else
-        {
-            // maybe will have to put specifier, e.g byte, word, byte ptr...
-            char c = '+';
-            if (!e.is_arg)
-                c = '-';
-            fprintf(f, "    mov rax, [rbp %c %d]\n ", c, e.address);
-        }
+        fprintf(f, "    mov rax, ");
+        generate_address(g, t.lexeme);
+        fprintf(f, "\n");
+        // int found;
+        // stack_val_t e = get_scope_elem(t.lexeme, *g.scope, &found);
+        // if (!found)
+        // {
+        //     printf("Identifier not found :'%s'!\n", t.lexeme);
+        //     exit(1);
+        // }
+        // else
+        // {
+        //     int addr = e.address; // maybe will have to put specifier, e.g byte, word, byte ptr...
+        //     char c = '+';
+        //     if (!e.is_arg)
+        //     {
+        //         c = '-';
+        //         addr = addr - get_first_var_offset(*g.scope) + e.n_bytes;
+        //     }
+        //     fprintf(f, "    mov rax, [rbp %c %d]\n ", c, addr);
+        // }
     }
     else if (expression->tag == ast_literal)
     {
@@ -172,16 +201,19 @@ void generate_expression(generator_t g, ast_t expression)
 void generate_simple_assignment(generator_t g, char *name, ast_t rhs)
 {
     FILE *f = g.out;
-    int found = 0;
-    scope_elem_t var = get_scope_elem(name, *g.scope, &found);
-    if (!found)
-    {
-        printf("Identifier '%s' not found.\n", name);
-        exit(1);
-    }
+    // int found = 0;
+    // scope_elem_t var = get_scope_elem(name, *g.scope, &found);
+    // if (!found)
+    // {
+    //     printf("Identifier '%s' not found.\n", name);
+    //     exit(1);
+    // }
     generate_expression(g, rhs);
-    fprintf(f, "    mov rbx, rbp\n");
-    fprintf(f, "    add rbx, %d\n", var.address);
+    // fprintf(f, "    mov rbx, rbp\n");
+    // fprintf(f, "    add rbx, %d\n", var.address);
+    fprintf(f, "    lea rbx, ");
+    generate_address(g, name);
+    fprintf(f, "\n");
     fprintf(f, "    mov [rbx], rax\n");
 }
 

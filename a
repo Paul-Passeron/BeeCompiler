@@ -1,0 +1,91 @@
+format ELF64 executable 3
+segment readable executable
+entry start
+FUNCTION_putchar:
+    push rbp
+    mov rbp, rsp
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, rbp
+    add rsi, 16
+    mov rdx, 1
+    syscall
+    pop rbp
+    ret
+start:
+    call FUNCTION_main
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+FUNCTION_main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    ; Function code here
+    mov rax, 1544578
+    sub rsp, 8
+    mov [rsp], rax
+    call FUNCTION_printn
+    add rsp, 8
+    mov rax, 0
+    add rsp, 64
+    pop rbp
+    ret
+    add rsp, 64
+    pop rbp
+    ret
+
+
+FUNCTION_printn:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    ; Function code here
+    mov rax, [rbp + 16]
+    push rax
+    mov rax, 10
+    pop rbx
+    mov rcx, rax
+    mov rax, rbx
+    mov rbx, rcx
+    cdq
+    mov rdx, 0
+    div rbx
+    lea rbx, [rbp - 8]
+    mov [rbx], rax
+    mov rax, [rbp - 8]
+    cmp rax, 0
+    je label_0
+    mov rax, [rbp - 8]
+    sub rsp, 8
+    mov [rsp], rax
+    call FUNCTION_printn
+    add rsp, 8
+    jmp label_1
+label_0:
+label_1:
+    mov rax, [rbp + 16]
+    push rax
+    mov rax, 10
+    pop rbx
+    mov rdx, 0
+    mov rcx, rax
+    mov rax, rbx
+    mov rbx, rcx
+    cdq
+    div rbx
+    mov rax, rdx
+    push rax
+    mov rax, '0'
+    pop rbx
+    add rax, rbx
+    sub rsp, 1
+    mov [rsp], byte al
+    call FUNCTION_putchar
+    add rsp, 1
+    add rsp, 64
+    pop rbp
+    ret
+
+

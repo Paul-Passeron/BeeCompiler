@@ -97,3 +97,14 @@ void print_stack(stack_t s)
         printf("%s: addr=%d, size=%d\n", var.identifier, var.address, var.n_bytes);
     }
 }
+
+int get_first_var_offset(stack_t s)
+{
+    if (s.length == 0)
+        return 0;
+    while (s.length > 0 && !stack_peek(&s).is_arg)
+    {
+        (void)stack_pop(&s);
+    }
+    return s.data[s.length].address;
+}
