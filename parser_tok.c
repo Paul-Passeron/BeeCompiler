@@ -219,7 +219,7 @@ parser_token_t get_type(token_t t)
         return tok_type;
     case KEYWORD:
     {
-        if (strcmp(t.lexeme, "auto") == 0)
+        if (strcmp(t.lexeme, "var") == 0)
             return key_auto;
         if (strcmp(t.lexeme, "else") == 0)
             return key_else;
