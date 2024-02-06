@@ -174,6 +174,54 @@ void generate_expression(generator_t g, ast_t expression)
             fprintf(f, "    sub rbx, rax\n");
             fprintf(f, "    mov rax, rbx\n");
         }
+        if (get_type(data.t) == op_eq)
+        {
+            fprintf(f, "    cmp rax, rbx\n");
+            fprintf(f, "    mov rax, 0\n");
+            fprintf(f, "    mov rbx, 1\n");
+            fprintf(f, "    cmove rax, rbx\n");
+        }
+
+        if (get_type(data.t) == op_diff)
+        {
+            fprintf(f, "    cmp rax, rbx\n");
+            fprintf(f, "    mov rax, 0\n");
+            fprintf(f, "    mov rbx, 1\n");
+            fprintf(f, "    cmovne rax, rbx\n");
+        }
+
+        if (get_type(data.t) == op_grtr_eq)
+        {
+            fprintf(f, "    cmp rbx, rax\n");
+            fprintf(f, "    mov rax, 0\n");
+            fprintf(f, "    mov rbx, 1\n");
+            fprintf(f, "    cmovge rax, rbx\n");
+        }
+
+        if (get_type(data.t) == op_lssr_eq)
+        {
+            fprintf(f, "    cmp rbx, rax\n");
+            fprintf(f, "    mov rax, 0\n");
+            fprintf(f, "    mov rbx, 1\n");
+            fprintf(f, "    cmovle rax, rbx\n");
+        }
+
+        if (get_type(data.t) == op_grtr)
+        {
+            fprintf(f, "    cmp rbx, rax\n");
+            fprintf(f, "    mov rax, 0\n");
+            fprintf(f, "    mov rbx, 1\n");
+            fprintf(f, "    cmovg rax, rbx\n");
+        }
+
+        if (get_type(data.t) == op_lssr)
+        {
+            fprintf(f, "    cmp rbx, rax\n");
+            fprintf(f, "    mov rax, 0\n");
+            fprintf(f, "    mov rbx, 1\n");
+            fprintf(f, "    cmovl rax, rbx\n");
+        }
+
         else if (get_type(data.t) == op_mult)
             fprintf(f, "    mul rbx\n");
         else if (get_type(data.t) == op_div)
@@ -198,23 +246,45 @@ void generate_expression(generator_t g, ast_t expression)
     }
 }
 
+void print_rax_size(generator_t g, int n_bytes)
+{
+    FILE *f = g.out;
+
+    switch (n_bytes)
+    {
+    case 1:
+        fprintf(f, "byte al");
+        break;
+    case 2:
+        fprintf(f, "word ax");
+        break;
+    case 4:
+        fprintf(f, "dword eax");
+        break;
+    case 8:
+        fprintf(f, "rax");
+        break;
+    default:
+        break;
+    }
+}
+
 void generate_simple_assignment(generator_t g, char *name, ast_t rhs)
 {
     FILE *f = g.out;
-    // int found = 0;
-    // scope_elem_t var = get_scope_elem(name, *g.scope, &found);
-    // if (!found)
-    // {
-    //     printf("Identifier '%s' not found.\n", name);
-    //     exit(1);
-    // }
+    int found = 0;
+    scope_elem_t var = get_scope_elem(name, *g.scope, &found);
+
     generate_expression(g, rhs);
     // fprintf(f, "    mov rbx, rbp\n");
     // fprintf(f, "    add rbx, %d\n", var.address);
     fprintf(f, "    lea rbx, ");
     generate_address(g, name);
     fprintf(f, "\n");
-    fprintf(f, "    mov [rbx], rax\n");
+    fprintf(f, "    mov [rbx], ");
+    print_rax_size(g, var.n_bytes);
+    fprintf(f, "\n");
+    // fprintf(f, "    mov [rbx], rax\n");
 }
 
 void generate_variable_declaration(generator_t g, ast_t decl)
@@ -412,22 +482,6 @@ void print_push_on_stack(generator_t g, int n_bytes)
     FILE *f = g.out;
     fprintf(f, "    sub rsp, %d\n", n_bytes);
     fprintf(f, "    mov [rsp], ");
-    switch (n_bytes)
-    {
-    case 1:
-        fprintf(f, "byte al");
-        break;
-    case 2:
-        fprintf(f, "word ax");
-        break;
-    case 4:
-        fprintf(f, "dword eax");
-        break;
-    case 8:
-        fprintf(f, "rax");
-        break;
-    default:
-        break;
-    }
+    print_rax_size(g, n_bytes);
     fprintf(f, "\n");
 }
